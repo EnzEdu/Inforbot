@@ -29,7 +29,7 @@ class M_AppUser(db.Model):
         self.senha_hash = generate_password_hash(senha)
 
     # Checa senha inserida com a senha da entrada do bd
-    def checa_senha(self, senha: str) -> bool:
+    def confere_senha(self, senha: str) -> bool:
         return check_password_hash(self.senha_hash, senha)
 
 
