@@ -100,24 +100,6 @@ def app():
             print(lista_mensagens)
 
             return render_template("dashboard.html", conversa=conversaInicial, lista_mensagens=lista_mensagens)
-
-        elif request.method == "POST":
-            '''
-            # PLACEHOLDER
-            conversaInicial : M_Conversa = M_Conversa.query.filter(
-                (M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.titulo == "Conversa inicial")
-            ).first()
-
-            # Salva a mensagem no bd
-            msg = M_Mensagem(
-                conversa_id=conversaInicial.id,
-                autor=session["usuario"],
-                text=request.form["user_message"]
-            )
-            db.session.add(msg)
-            db.session.commit()
-            '''
-            print("gato")
         return render_template("dashboard.html")
 
 
@@ -129,12 +111,23 @@ def app():
         conversa_id = data.get("conversa_id")
 
         if not mensagem_usuario:
-            return jsonify({"error": "No message provided"}), 400
+            return jsonify({"error": "Nenhuma mensagem digitada."}), 400
 
+        # Define o historico
         # PLACEHOLDER
         conversaInicial : M_Conversa = M_Conversa.query.filter(
             (M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.titulo == "Conversa inicial")
         ).first()
+        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversaInicial.id)).all()
+        historico = [{
+            "papel": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
+            "mensagem": mensagem.texto
+        } for mensagem in mensagens]
+        historico.append({"papel": "USUARIO", "mensagem": mensagem_usuario})
+        print(historico)
+
+        # Envia mensagem para o modelo
+        ai_text = Agent.enviar_mensagem(historico)
 
         # Salva a pergunta
         msg = M_Mensagem(
@@ -144,9 +137,6 @@ def app():
         )
         db.session.add(msg)
         db.session.commit()
-
-        # Envia mensagem para o modelo
-        ai_text = Agent.send_message(mensagem_usuario)
 
         # Salva a resposta
         ai_msg = M_Mensagem(

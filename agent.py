@@ -1,6 +1,7 @@
 # agent.py
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
+from typing import List, Dict
 
 class ChatAgent:
     def __init__(self, api_key: str):
@@ -10,12 +11,15 @@ class ChatAgent:
             temperature=0
         )
 
-    def enviar_mensagem(self, user_msg: str):
-        messages = [
-            HumanMessage(content=user_msg)
-        ]
+    def enviar_mensagem(self, lista_msg):
+        mensagens = []
+        for msg in lista_msg:
+            if (msg["papel"] == "USUARIO"):
+                mensagens.append(HumanMessage(content=msg["mensagem"]))
+            else:
+                mensagens.append(AIMessage(content=msg["mensagem"]))
         
-        response = self.llm.invoke(messages)
+        response = self.llm.invoke(mensagens)
         return response.content
 
 

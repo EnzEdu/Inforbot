@@ -41,7 +41,7 @@ class M_Conversa(db.Model):
     appuser_id      = db.Column(db.Integer, db.ForeignKey("t_appuser.id"), nullable=False)
     id              = db.Column(db.Integer, primary_key=True)
     criado_em       = db.Column(db.DateTime, default=datetime.now)
-    titulo          = db.Column(db.String(100), unique=True, nullable=False)
+    titulo          = db.Column(db.String(100), nullable=False)
 
     # Conversa esta ligada a 1 usuario
     t_appuser = db.relationship(
@@ -66,8 +66,8 @@ class M_Mensagem(db.Model):
     conversa_id     = db.Column(db.Integer, db.ForeignKey("t_conversa.id"), nullable=False) # chave estrangeira
     id              = db.Column(db.Integer, primary_key=True)
     enviada_em      = db.Column(db.DateTime, default=datetime.now)
-    autor           = db.Column(db.String(80), unique=True, nullable=False)
-    texto           = db.Column(db.Text, unique=True, nullable=False)
+    autor           = db.Column(db.String(80), nullable=False)
+    texto           = db.Column(db.Text, nullable=False)
 
     # Mensagem esta ligada a 1 conversa
     t_conversa = db.relationship("M_Conversa", back_populates="mensagens")
