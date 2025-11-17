@@ -7,3 +7,9 @@ window.addEventListener("load", function() {
         };
     }
 });
+
+// Apresenta erros durante o login
+function apresentarErro(msg) {
+    alert(msg);
+    return false;
+}

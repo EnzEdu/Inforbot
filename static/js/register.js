@@ -14,3 +14,9 @@ function validarFormulario(event) {
     }
     return true;
 }
+
+// Apresenta erros durante o registro
+function apresentarErro(msg) {
+    alert(msg);
+    return false;
+}

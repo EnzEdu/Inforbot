@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener("click", function(event) {
             event.preventDefault();
             // Redireciona para a pág de login e substitui a pág atual no histórico
-            window.location.replace("login.html");
+            window.location.href = "/logout";
         });
     }
 });
@@ -78,6 +78,7 @@ chatForm.addEventListener('submit', async (e) => {
                 // O ID de sessão é o ponto-chave para o backend manter o histórico isolado
                 session_id: userId, 
                 message: userMessage,
+                conversa_id: conversaAtualId,
             }),
         });
 
