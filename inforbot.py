@@ -113,6 +113,8 @@ def app():
         if not mensagem_usuario:
             return jsonify({"error": "Nenhuma mensagem digitada."}), 400
 
+
+
         # Define o historico
         # PLACEHOLDER
         conversaInicial : M_Conversa = M_Conversa.query.filter(
@@ -123,13 +125,52 @@ def app():
             "papel": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
             "mensagem": mensagem.texto
         } for mensagem in mensagens]
+
+        # Cria um resumo a cada 6 mensagens
+        if (len(historico) > 0 and len(historico) % 6 == 0):
+            # Separa as ultimas seis mensagens do historico
+            historico1 = historico[-6:]
+
+            # Gera um resumo
+            historico1.append({"papel": "USUARIO", "mensagem": 
+                "Este é o histórico de prompts da conversa até agora. " + 
+                "Retorne um resumo, utilizando o menor número possível de tokens, " + 
+                "mas mantendo a descrição de pontos importantes que podem vir a ser " + 
+                "utilizados novamente na conversa."})
+            ai_text_res = Agent.enviar_mensagem(historico1)
+
+            # Salva a resposta
+            ai_msg_res = M_Mensagem(
+                conversa_id=conversa_id,
+                autor="GPT-5.0_Nano",
+                texto=ai_text_res
+            )
+            db.session.add(ai_msg_res)
+            db.session.commit()
+
+            # Coleta o novo historico
+            mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversaInicial.id)).all()
+            historico = [{
+                "papel": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
+                "mensagem": mensagem.texto
+            } for mensagem in mensagens]
+
+            # Restringe o historico para apenas o resumo
+            historico = historico[-1:]
+
+        else:
+            # Retorna as mensagens desde o ultimo resumo
+            qnt_faltante_resumo = len(historico) % 6
+            historico = historico[(qnt_faltante_resumo * -1):]
+
+
         historico.append({"papel": "USUARIO", "mensagem": mensagem_usuario})
-        print(historico)
 
         # Envia mensagem para o modelo
         ai_text = Agent.enviar_mensagem(historico)
 
         # Salva a pergunta
+        db.session.expunge_all()
         msg = M_Mensagem(
             conversa_id=conversa_id,
             autor=session["usuario"],
@@ -139,6 +180,7 @@ def app():
         db.session.commit()
 
         # Salva a resposta
+        db.session.expunge_all()
         ai_msg = M_Mensagem(
             conversa_id=conversa_id,
             autor="GPT-5.0_Nano",

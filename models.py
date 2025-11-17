@@ -7,7 +7,7 @@ db = SQLAlchemy()
 class M_AppUser(db.Model):
     __tablename__ = "t_appuser"
 
-    id              = db.Column(db.Integer, primary_key=True)
+    id              = db.Column(db.Integer, primary_key=True, autoincrement=True)
     criado_em       = db.Column(db.DateTime, default=datetime.now)
     nomeCompleto    = db.Column(db.String(400), unique=True, nullable=False)
     usuario         = db.Column(db.String(80), unique=True, nullable=False)
@@ -39,7 +39,7 @@ class M_Conversa(db.Model):
     __tablename__ = "t_conversa"
 
     appuser_id      = db.Column(db.Integer, db.ForeignKey("t_appuser.id"), nullable=False)
-    id              = db.Column(db.Integer, primary_key=True)
+    id              = db.Column(db.Integer, primary_key=True, autoincrement=True)
     criado_em       = db.Column(db.DateTime, default=datetime.now)
     titulo          = db.Column(db.String(100), nullable=False)
 
@@ -64,7 +64,7 @@ class M_Mensagem(db.Model):
     __tablename__ = "t_mensagem"
 
     conversa_id     = db.Column(db.Integer, db.ForeignKey("t_conversa.id"), nullable=False) # chave estrangeira
-    id              = db.Column(db.Integer, primary_key=True)
+    id              = db.Column(db.Integer, primary_key=True, autoincrement=True)
     enviada_em      = db.Column(db.DateTime, default=datetime.now)
     autor           = db.Column(db.String(80), nullable=False)
     texto           = db.Column(db.Text, nullable=False)
