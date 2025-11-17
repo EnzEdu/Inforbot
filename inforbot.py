@@ -131,13 +131,12 @@ def app():
             # Separa as ultimas seis mensagens do historico
             historico1 = historico[-6:]
 
-            # Gera um resumo
-            historico1.append({"papel": "USUARIO", "mensagem": 
-                "Este é o histórico de prompts da conversa até agora. " + 
-                "Retorne um resumo, utilizando o menor número possível de tokens, " + 
-                "mas mantendo a descrição de pontos importantes que podem vir a ser " + 
-                "utilizados novamente na conversa."})
-            ai_text_res = Agent.enviar_mensagem(historico1)
+            # Gera um resumo das ultimas mensagens
+            resumo : str = "Este é o histórico de prompts da conversa até agora. " \
+                "Retorne um resumo, utilizando o menor número possível de tokens, " \
+                "mas mantendo a descrição de pontos importantes que podem vir a ser utilizados " \
+                "novamente na conversa."
+            ai_text_res = Agent.enviar_mensagem(historico1, resumo)
 
             # Salva a resposta
             ai_msg_res = M_Mensagem(
@@ -164,10 +163,8 @@ def app():
             historico = historico[(qnt_faltante_resumo * -1):]
 
 
-        historico.append({"papel": "USUARIO", "mensagem": mensagem_usuario})
-
         # Envia mensagem para o modelo
-        ai_text = Agent.enviar_mensagem(historico)
+        ai_text = Agent.enviar_mensagem(historico, mensagem_usuario)
 
         # Salva a pergunta
         db.session.expunge_all()
