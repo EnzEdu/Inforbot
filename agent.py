@@ -1,7 +1,7 @@
 # agent.py
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
-from typing import List, Dict
+import tiktoken
 
 class ChatAgent:
     def __init__(self, api_key: str):
@@ -21,8 +21,16 @@ class ChatAgent:
         
         response = self.llm.invoke(mensagens)
         return response.content
+    
+    def contar_tokens(self, msg):
+        encoding_modelo = tiktoken.encoding_for_model("gpt-5-nano")
+        tokens = encoding_modelo.encode(msg)
+        return len(tokens)
+    
+    def verificar_num_tokens(self, msg):
+        return self.contar_tokens(msg) <= self.max_token_msg
 
 
 # Cria a instancia
 import os
-Agent = ChatAgent(os.getenv("INFORBOT_MODEL_SECRET_KEY"))
+Agent = ChatAgent(api_key=os.getenv("INFORBOT_MODEL_SECRET_KEY"))
