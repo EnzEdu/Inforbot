@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/login.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel='stylesheet' href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'>
+    <title>Acessar Infor Bot</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <span>Infor Bot</span>
+            <i class='bx bx-desktop'></i>
+        </div>
+    </nav>
+    <div class="container">
+        <form action="#" method="#">
+            <h1>Login</h1>
+            <div class="input-box">
+                <input type="text" id="usuario" name="usuario" placeholder="Usuário" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+                <input type="password" id="senha" name="senha" placeholder="Senha" required>
+                <i class='bx bxs-lock-alt'></i>
+            </div>
+            <button type="submit" class="btnEntrar">Entrar</button>
+            <div class="registrar">
+                <p>Não tem uma conta? <a href="register.html">Cadastra-se</a></p>
+            </div>
+        </form>
+    </div>
+    <script src="/static/js/login.js"></script>
+</body>
+</html>
