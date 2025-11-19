@@ -24,35 +24,52 @@
         </div>
     </nav>
 
-    <div class="chat-container">
-        <div id="chat-window" class="dashboard-section">
-            <div class="message bot-message">
-                Olá! Sou o Infor Bot. Como posso ajudar?
+    <div class="main-layout">
+        <div id="session-sidebar">
+            <button id="new-chat-btn" title="Nova Conversa">
+                <i class='bx bx-plus-medical'></i> Novo Chat
+            </button>
+            
+            <div id="session-list">
+                <div class="session-item active" data-session-id="initial-session">
+                    <span class="session-title">Sessão Inicial</span>
+                    <button class="delete-session-btn" title="Excluir">
+                        <i class='bx bx-trash'></i>
+                    </button>
+                </div>
             </div>
-            {% for mensagem in lista_mensagens %}
-                {% if mensagem.autor == "USUARIO" %}
-                    <div class="message user-message">
-                        {{ mensagem.texto }}
-                    </div>
-                {% else %}
-                    <div class="message bot-message">
-                        {{ mensagem.texto }}
-                    </div>
-                {% endif %}
-            {% endfor %}
         </div>
 
-        <form id="chat-form" class="chat-input-area">
-            <textarea type="text" id="user-input" name="user_message" placeholder="Pergunte ao Bot..." rows="1" required></textarea>
-            <button type="submit" id="send-btn" class="send-btn">
-                <i class='bx bx-send'></i>
-            </button>
-        </form>
+        <div class="chat-main-area">
+            <div class="chat-container">
+                <div id="chat-window" class="dashboard-section">
+                    <div class="message bot-message">
+                        Olá! Sou o Infor Bot. Como posso ajudar?
+                    </div>
+                    {% for mensagem in lista_mensagens %}
+                        {% if mensagem.autor == "USUARIO" %}
+                            <div class="message user-message">
+                                {{ mensagem.texto }}
+                            </div>
+                        {% else %}
+                            <div class="message bot-message">
+                                {{ mensagem.texto }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <form id="chat-form" class="chat-input-area">
+                    <textarea type="text" id="user-input" name="user_message" placeholder="Pergunte ao Bot..." rows="1" required></textarea>
+                    <button type="submit" id="send-btn" class="send-btn">
+                        <i class='bx bx-send'></i>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
     <script src="/static/js/dashboard.js"></script>
     <script>
         const conversaAtualId = {{ conversa.id }};
     </script>
-
 </body>
 </html>
