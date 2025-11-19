@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/register.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+    <link rel='stylesheet' href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'>
+    <title>Registro no Infor Bot</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <span>Infor Bot</span>
+            <i class='bx bx-desktop'></i>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="form-box">
+            <h1>Criar Conta</h1>
+            <form action="#" method="POST" onsubmit="return validarFormulario(event)">
+                <div class="input-box">
+                    <label for="nome">Nome Completo:</label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                <div class="input-box">
+                    <label for="usuario">Usuário:</label>
+                    <input type="text" id="usuario" name="usuario" required>
+                </div>
+                <div class="input-box">
+                    <label for="email">E-mail:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="input-box s">
+                    <label for="senha">Senha:</label>
+                    <input type="password" id="senha" name="senha" required>
+                </div>
+                <div class="input-box s">
+                    <label for="confirmar_senha">Confirmar Senha:</label>
+                    <input type="password" id="confirmar_senha" name="confirmar_senha" required>
+                </div>
+                <div class="input-box">
+                    <button type="submit">Cadastrar</button>
+                </div>
+            </form>
+            <div class="login">
+                <p>Você já tem uma conta? <a href="{{ url_for('login') }}">Fazer login</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/register.js"></script>
+    {% for mensagem in get_flashed_messages() %}
+        <script>
+            apresentarErro("{{ mensagem }}");
+        </script>
+    {% endfor %}
+</body>
+</html>

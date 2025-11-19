@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel='stylesheet' href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'>
+    <title>Infor Bot</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <span>Infor Bot</span>
+            <i class='bx bx-desktop'></i>
+        </div>
+        <div class="navbar-menu">
+            <button class="menu-btn">
+                <i class='bx bx-menu'></i>
+            </button>
+            <ul class="menu-dropdown">
+                <li><a href="#" id="logout-btn">Sair</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-layout">
+        <div id="session-sidebar">
+            <form method="POST">
+            <button type="submit" id="new-chat-btn" title="Nova Conversa">
+                <i class='bx bx-plus-medical'></i> Novo Chat
+            </button>
+            </form>
+            
+            <div id="session-list">
+                {% for conversa in lista_conversas %}
+                    <a href="/{{ session['usuario'] }}/dashboard/{{ conversa.id }}">
+                        <div class="session-item active" data-session-id="{{ conversa.id }}">
+                            <span class="session-title">{{ conversa.titulo }}</span>
+                            <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="delete-session-btn" title="Excluir">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </form>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="chat-main-area">
+            <div class="chat-container">
+                <div id="chat-window" class="dashboard-section">
+                    <div class="message bot-message">
+                        Olá! Sou o Infor Bot. Como posso ajudar?
+                    </div>
+                    {% for mensagem in lista_mensagens %}
+                        {% if mensagem.autor == "USUARIO" %}
+                            <div class="message user-message">
+                                {{ mensagem.texto }}
+                            </div>
+                        {% else %}
+                            <div class="message bot-message">
+                                {{ mensagem.texto }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <form id="chat-form" class="chat-input-area">
+                    <textarea type="text" id="user-input" name="user_message" placeholder="Pergunte ao Bot..." rows="1" required></textarea>
+                    <button type="submit" id="send-btn" class="send-btn">
+                        <i class='bx bx-send'></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/dashboard.js"></script>
+    <script>
+        const conversaAtualId = {{ session['conversa_id'] }};
+    </script>
+
+</body>
+</html>
