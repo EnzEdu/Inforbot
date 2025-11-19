@@ -12,7 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: white;
+    background: url(../img/img_fundo5.jpg) no-repeat;
     background-size: cover;
     background-position: center;
 }
@@ -23,7 +23,7 @@ body {
     height: 60px;
     align-items: center;
     justify-content: flex-start;
-    background: white;
+    background: url(../img/img_fundo5.jpg) no-repeat;
     border-bottom: 2px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -109,7 +109,7 @@ body {
 
 .form-box .input-box input:focus {
     color: black;
-    border: 2px solid #6F42C1;
+    border: 2px solid #5bb1b0;
 }
 
 .form-box .input-box button {
@@ -129,7 +129,7 @@ body {
 }
 
 .form-box .input-box button:hover {
-    background: #6F42C1;
+    background: #5bb1b0;
 }
 
 .form-box .login {
@@ -145,5 +145,5 @@ body {
 .login p a:hover {
     font-weight: bold;
     text-decoration: underline;
-    color: #6F42C1;
+    color: #5bb1b0;
 }

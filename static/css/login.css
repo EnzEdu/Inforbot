@@ -12,7 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: white;
+    background: url(../img/img_fundo5.jpg) no-repeat;
     background-size: cover;
     background-position: center;
 }
@@ -23,7 +23,7 @@ body {
     height: 60px;
     align-items: center;
     justify-content: flex-start;
-    background:  white;
+    background: url(../img/img_fundo5.jpg) no-repeat;
     border-bottom: 2px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -94,7 +94,7 @@ body {
 
 .input-box input:focus {
     color: black;
-    border: 2px solid #6F42C1;;
+    border: 2px solid #5bb1b0;
 }
 
 .input-box input::placeholder {
@@ -119,13 +119,13 @@ body {
     cursor: pointer;
     font-size: 16px;
     background: black;
-    color: white;
+    color: White;
     font-weight: 600;
     transition: all 0.1s ease;
 }
 
 .btnEntrar:hover {
-    background: #6F42C1;
+    background: #5bb1b0;
 }
 
 .container .registrar {
@@ -141,5 +141,5 @@ body {
 .registrar p a:hover {
     font-weight: bold;
     text-decoration: underline;
-    color: #6F42C1;
+    color: #5bb1b0;
 }

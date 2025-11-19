@@ -14,7 +14,7 @@ body {
     min-height: 100vh;
     height: 100vh;
     overflow: hidden;
-    background: white;
+    background: url(../img/img_fundo5.jpg) no-repeat;
     background-size: cover;
     background-position: center;
 }
@@ -25,7 +25,7 @@ body {
     height: 60px;
     align-items: center;
     justify-content: space-between;
-    background: white;
+    background: url(../img/img_fundo5.jpg) no-repeat;
     border-bottom: 2px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -78,7 +78,7 @@ body {
 }
 
 .navbar-menu .menu-btn:hover {
-    color: #6F42C1;
+    color: #5bb1b0;
 }
 
 .navbar-menu .menu-dropdown {
@@ -108,7 +108,7 @@ body {
 }
 
 .navbar-menu .menu-dropdown li a:hover {
-    color: #6F42C1;
+    color: #5bb1b0;
     text-decoration: underline;
 }
 
@@ -168,32 +168,139 @@ body {
     }
 }
 
+/* NOVO: Layout principal Flexbox */
+.main-layout {
+    display: flex;
+    width: 100%;
+    background: transparent;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+    /* Ocupa a altura total da tela menos a altura da navbar */
+    height: calc(100vh - 60px); 
+    margin-top: 60px; /* Desce o layout para baixo da navbar fixa */
+    max-width: 23000px; /* Dá mais espaço para a barra lateral */
+}
+
+/* --- Estilos da Barra Lateral (Sidebar) --- */
+#session-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 250px; /* Largura fixa para a barra lateral */
+    min-width: 200px;
+    background-color: #f8f8f8;
+    background: transparent;
+    backdrop-filter: blur(10px);
+    border-right: 1px solid lightgrey;
+    padding: 20px 10px;
+    overflow-y: auto; /* Permite rolagem se houver muitas sessões */
+}
+
+#new-chat-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.1s;
+}
+
+#new-chat-btn:hover {
+    background-color: #5bb1b0;
+}
+
+/* Estilos da Lista de Sessões */
+#session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    border: 1px solid transparent;
+}
+
+.session-item:hover {
+    background-color: #5bb1b0;
+}
+
+.session-item.active {
+    background-color: lightgrey;
+    color: black;
+}
+
+.session-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.delete-session-btn {
+    background: none;
+    border: none;
+    color: black;
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 5px;
+    font-size: 18px;
+    transition: color 0.1s;
+}
+
+.delete-session-btn:hover {
+    color: red;
+}
+
+/* Área que contém o chat principal */
+.chat-main-area {
+    flex-grow: 1; /* Ocupa todo o espaço restante horizontalmente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-right: 10px; /* Mantém o padding de fora do chat */
+}
+
 /* Contêiner principal, alinha o chat verticalmente */
 .chat-container {
     display: flex;
-    flex-grow: 1;
     flex-direction: column;
     width: 100%;
-    max-width: 800px; /* Limita a largura máxima do chat */
-    padding: 20px;
-    margin-top: 80px; /* Espaço para a barra de navegação fixa */
-    min-height: calc(100vh - 80px); /* Altura mínima para ocupar a tela */
+    max-width: 1000px; /* Limita a largura máxima do chat */
+    padding: 20px 0;
+    height: 100%;
+    margin-top: 15px; /* Espaço para a barra de navegação fixa */
+    min-height: auto; /* Altura mínima para ocupar a tela */
 }
 
 /* Janela de Histórico de Conversa */
 #chat-window {
     flex-grow: 1; /* Faz a janela de chat ocupar o máximo de espaço vertical */
     height: auto; /* Ajusta a altura com base no flex-grow */
-    max-height: calc(100vh - 200px); /* Limite máximo para deixar espaço para a entrada */
     overflow-y: auto; /* Torna a janela rolável */
+    max-height: none;
     text-align: left; /* Garante que o texto fique alinhado à esquerda */
     padding: 20px;
     margin-bottom: 15px;
     /* Ajusta a aparência herdada de .dashboard-section se necessário */
-    background-color: white; /* Cor de fundo para o histórico */
+    background: transparenret;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
     border: 1px solid lightgrey;
     border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 /* Estilos para Mensagens */
@@ -214,7 +321,7 @@ body {
 }
 
 .user-message {
-    background-color: #8b6dc2; /* Sua cor primária */
+    background-color: #5bb1b0; /* Sua cor primária */
     color: white;
     align-self: flex-end; /* Alinha à direita */
     margin-left: auto; /* Garante que fique totalmente à direita */
@@ -250,7 +357,7 @@ body {
 }
 
 .chat-input-area textarea:focus {
-    border: 2px solid #6F42C1;
+    border: 2px solid #5bb1b0;
     padding: 9px 14px; /* Compensar a borda de 2px para evitar pulo de layout */
 }
 
@@ -275,7 +382,7 @@ body {
 }
 
 .send-btn:hover {
-    background: #6F42C1;
+    background: #5bb1b0;
 }
 
 .send-btn i {
