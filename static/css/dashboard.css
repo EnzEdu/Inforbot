@@ -234,13 +234,13 @@ body {
     border: 1px solid transparent;
 }
 
-.session-item:hover {
-    background-color: #5bb1b0;
-}
-
 .session-item.active {
     background-color: lightgrey;
     color: black;
+}
+
+.session-item:hover {
+    background-color: #5bb1b0;
 }
 
 .session-title {

@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, abort
 from flask_migrate import Migrate
+from flasgger import Swagger
 from typing import List
 from models import db, M_AppUser, M_Conversa, M_Mensagem
 from config import Config
@@ -9,28 +10,79 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate = Migrate(app, db)
+swagger = Swagger(app)
 
 
 
 @app.route("/")
 def home():
+    """
+    Endpoint inicial.
+    ---
+    responses:
+        200:
+            description: OK
+        500:
+            description: Erro no server.
+    """
     if 'usuario' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard', user_name=session["usuario"], conversa_id=session["conversa_id"]))
     return redirect(url_for('login'))
 
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """
+    Endpoint de login
+    ---
+    tags:
+      - Login
+    
+    summary: Realiza o login.
+    
+    description: Permite acesso ao sistema ao informar as credenciais.
+    
+    parameters:
+      - name: usuario
+        in: formData
+        type: string
+        required: true
+        description: Nome de usuário.
+      - name: senha
+        in: formData
+        type: string
+        required: true
+        description: Senha do usuário.
+    
+    consumes:
+      - application/x-www-form-urlencoded
+    
+    responses:
+        200:
+            description: OK
+        500:
+            description: Erro no server.
+    """
     if request.method == "POST":
         usuario = request.form["usuario"]
         senha = request.form["senha"]
 
         user : M_AppUser = M_AppUser.query.filter_by(usuario=usuario).first()
         if user and user.confere_senha(senha):
+            conversa_padrao : M_Conversa = M_Conversa.query.filter_by(t_appuser=user).first()
+
             session["user_id"] = user.id
             session["usuario"] = user.usuario
-            return redirect(url_for("dashboard"))
+            if conversa_padrao:
+                session["conversa_id"] = conversa_padrao.id
+            else:
+                # Cria uma sessao caso ainda nao exista
+                conversa_inicial = M_Conversa(t_appuser=user, titulo="Sessão inicial")
+                db.session.add(conversa_inicial)
+                db.session.commit()
+                session["conversa_id"] = conversa_inicial.id
+            return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
         else:
             flash("Credenciais invalidas.")
             return redirect(url_for("login"))
@@ -40,6 +92,22 @@ def login():
 
 @app.route("/logout")
 def logout():
+    """
+    Endpoint de logout
+    ---
+    tags:
+      - Login
+    
+    summary: Realiza o logout.
+    
+    description: Permite a desconexão do sistema ao utilizar as credenciais da sessão atual.
+
+    responses:
+        200:
+            description: OK
+        500:
+            description: Erro no server.
+    """
     session.clear()
     return redirect(url_for("login"))
 
@@ -47,16 +115,55 @@ def logout():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """
+    Endpoint de criação de usuário
+    ---
+    tags:
+      - Usuário
+
+    summary: Realiza o cadastro de um usuário.
+
+    description: Permite a desconexão do sistema ao utilizar as credenciais da sessão atual.
+
+    consumes:
+      - application/x-www-form-urlencoded
+
+    parameters:
+      - name: Nome
+        in: formData
+        type: string
+        required: true
+        description: Nome completo do usuário.
+
+      - name: Nome de usuário
+        in: formData
+        type: string
+        required: true
+        description: Nome de usuário único.
+
+      - name: E-mail
+        in: formData
+        type: string
+        required: true
+        description: E-mail do usuário.
+
+      - name: Senha
+        in: formData
+        type: string
+        required: true
+        description: Senha escolhida pelo usuário.
+
+    responses:
+        200:
+            description: OK
+        500:
+            description: Erro no server.
+    """
     if request.method == "POST":
         nomeCompleto = request.form["nome"].strip()
         usuario = request.form["usuario"].strip()
         email = request.form["email"].strip().lower()
         senha = request.form["senha"]
-
-        # Check de validacao de campos
-        #if not nomeCompleto or not usuario or not email or not senha:
-            #flash("Campos invalidos.")
-            #return redirect(url_for("register"))
 
         # Check de campos em uso
         if M_AppUser.query.filter((M_AppUser.usuario == usuario) | (M_AppUser.email == email)).first():
@@ -66,7 +173,7 @@ def register():
         user = M_AppUser(nomeCompleto=nomeCompleto, usuario=usuario, email=email)
         user.set_senha_hasheada(senha)
         # PLACEHOLDER
-        conversa_inicial = M_Conversa(t_appuser=user, titulo="Conversa inicial")
+        conversa_inicial = M_Conversa(t_appuser=user, titulo="Sessão inicial")
 
         # Salva o usuario no bd
         db.session.add(user)
@@ -80,31 +187,111 @@ def register():
 
 
 
-@app.route("/dashboard", methods=["GET", "POST"])
-def dashboard():
-    if request.method == "GET":
+@app.route("/<user_name>/dashboard/<conversa_id>", methods=["GET", "POST"])
+def dashboard(user_name, conversa_id):
+    """
+    Endpoint de acesso a uma conversa do dashboard.
+    ---
+    tags:
+      - Usuário
+
+    summary: Acesso a uma conversa do dashboard.
+
+    description: >
+        Retorna a pagina do dashboard para o usuário aberto em uma conversa.
+        Acesso proibido se a sessão não estiver batendo com o login.
+    
+    parameters:
+      - name: user_name
+        in: path
+        type: string
+        required: true
+        description: Nome do usuário.
+
+      - name: conversa_id
+        in: path
+        type: integer
+        required: true
+        description: ID da conversa escolhida.
+
+    responses:
+        200:
+            description: OK
+        403:
+            description: Você não tem acesso a esta página.
+        500:
+            description: Erro no server.
+    """
+    # Previne acessos externos
+    if session.get("usuario") != user_name:
+        abort(403)
+
+    if request.method == "POST":
+        nova_conversa = M_Conversa(appuser_id=session["user_id"], titulo="Sessão inicial")
+        db.session.add(nova_conversa)
+        db.session.commit()
+
+        session["conversa_id"] = nova_conversa.id
+    else:
+        if (session["conversa_id"]):
+            session["conversa_id"] = conversa_id
+
+    # Recebe a lista de conversas
+    lista_conversas = M_Conversa.query.filter((M_Conversa.appuser_id == session["user_id"])).all()
+
+    if (session["conversa_id"]):
         # Recebe a lista de mensagens da conversa selecionada
-        # PLACEHOLDER
-        conversaInicial : M_Conversa = M_Conversa.query.filter(
-            (M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.titulo == "Conversa inicial")
-        ).first()
-        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversaInicial.id)).all()
+        conversa : M_Conversa = M_Conversa.query.filter(((M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.id == conversa_id))).first()
+        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa.id)).all()
 
         # Converte em uma lista de tuplas (mais controlavel no html)
         lista_mensagens = [{
             "autor": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
             "texto": mensagem.texto
         } for mensagem in mensagens]
-        print(mensagens)
-        print(lista_mensagens)
+        lista_mensagens = [result for result in lista_mensagens if "Resumo:" not in result["texto"] and "Titulo:" not in result["texto"]]
 
-        return render_template("dashboard.html", conversa=conversaInicial, lista_mensagens=lista_mensagens)
-    return render_template("dashboard.html")
+        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens)
+    else:
+        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[])
 
 
 
 @app.route("/api/chat", methods=["POST"])
-def send_message():
+def enviar_mensagem():
+    """
+    Endpoint de envio de mensagem para API do modelo.
+    ---
+    tags:
+      - Operações
+    
+    summary: Manda uma mensagem para o modelo utilizado.
+    
+    description: Recebe a mensagem do usuário, repassa para o modelo, e aguarda sua resposta.
+
+    requestBody:
+    required: true
+    content:
+        application/json:
+        schema:
+            type: object
+            properties:
+            message:
+                type: string
+                example: "Olá!"
+            conversa_id:
+                type: integer
+                example: 67
+            required:
+            - message
+            - conversa_id
+
+    responses:
+        200:
+            description: OK
+        500:
+            description: Erro no server.
+    """
     data = request.get_json()
     mensagem_usuario = data.get("message")
     conversa_id = data.get("conversa_id")
@@ -115,15 +302,12 @@ def send_message():
 
 
     # Define o historico
-    # PLACEHOLDER
-    conversaInicial : M_Conversa = M_Conversa.query.filter(
-        (M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.titulo == "Conversa inicial")
-    ).first()
-    mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversaInicial.id)).all()
+    mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa_id)).all()
     historico = [{
         "papel": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
         "mensagem": mensagem.texto
     } for mensagem in mensagens]
+    historico = [result for result in historico if "Resumo:" not in result["mensagem"] and "Titulo:" not in result["mensagem"]]
 
     # Cria um resumo a cada 6 mensagens
     if (len(historico) > 0 and len(historico) % 6 == 0):
@@ -134,7 +318,7 @@ def send_message():
         resumo : str = "Este é o histórico de prompts da conversa até agora. " \
             "Retorne um resumo, utilizando o menor número possível de tokens, " \
             "mas mantendo a descrição de pontos importantes que podem vir a ser utilizados " \
-            "novamente na conversa."
+            "novamente na conversa. Comece sua resposta com a palavra Resumo."
         ai_text_res = Agent.enviar_mensagem(historico1, resumo)
 
         # Salva a resposta
@@ -147,14 +331,12 @@ def send_message():
         db.session.commit()
 
         # Coleta o novo historico
-        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversaInicial.id)).all()
+        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa_id)).all()
         historico = [{
             "papel": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
             "mensagem": mensagem.texto
         } for mensagem in mensagens]
-
-        # Restringe o historico para apenas o resumo
-        historico = historico[-1:]
+        historico = [result for result in historico if "Resumo:" not in result["mensagem"] and "Titulo:" not in result["mensagem"]]
 
     else:
         # Retorna as mensagens desde o ultimo resumo
@@ -185,8 +367,89 @@ def send_message():
     db.session.add(ai_msg)
     db.session.commit()
 
+    # Se o historico anterior a este dialogo estava vazio,
+    # gera um titulo para a conversa
+    if len(historico) == 0:
+        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa_id)).all()
+        historico = [{
+            "papel": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
+            "mensagem": mensagem.texto
+        } for mensagem in mensagens]
+
+        # Gera um resumo das ultimas mensagens
+        titulo : str = "Este é o histórico de prompts da conversa até agora. " \
+            "Retorne um titulo para esta conversa, baseado no dialogo recente. " \
+            "Sua resposta deve começar com \"Titulo:\", seguido por sua sugestão de título. Nada mais." \
+            "Sua sugestão de título está limitada a no máximo 5 palavras."
+        ai_text_res = Agent.enviar_mensagem(historico, titulo)
+
+        # Salva a resposta
+        ai_msg_res = M_Mensagem(
+            conversa_id=conversa_id,
+            autor="GPT-5.0_Nano",
+            texto=ai_text_res
+        )
+        db.session.add(ai_msg_res)
+
+        # Atualiza o titulo
+        nova_conv : M_Conversa = M_Conversa.query.get(conversa_id)
+        nova_conv.titulo = ai_text_res.split("Titulo: ", 1)[1]
+    db.session.commit()
+
     # Retorna a resposta
     return jsonify({"response": ai_text})
+
+
+
+@app.route("/deletar_conversa/<conversa_id>", methods=["POST"])
+def deletar_conversa(conversa_id):
+    """
+    Endpoint de deleção de conversa.
+    ---
+    tags:
+      - Operações
+    
+    summary: Apaga uma conversa existente.
+    
+    description: Remove uma conversa do usuário e suas mensagens. Cria uma conversa nova caso o usuário se esgote de conversas.
+
+    responses:
+        200:
+            description: OK
+        500:
+            description: Erro no server.
+    """
+    # Busca a conversa no banco
+    conversa = M_Conversa.query.filter_by(id=conversa_id, appuser_id=session["user_id"]).first()
+
+    if conversa:
+        try:
+            # Deleta a conversa em si
+            db.session.delete(conversa)
+            
+            # Salva as alterações
+            db.session.commit()
+            
+        except Exception as e:
+            db.session.rollback() # Desfaz se der erro
+            print(f"Erro ao deletar: {e}")
+            flash("Erro ao excluir a conversa.")
+    else:
+        flash("Conversa não encontrada ou você não tem permissão.")
+
+    # Redireciona para dashboard
+    ultima_conversa : M_Conversa = M_Conversa.query.filter_by(appuser_id=session["user_id"]).first()
+    if ultima_conversa:
+        session["conversa_id"] = ultima_conversa.id
+        return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+    else:
+        # Cria uma sessao caso ainda nao exista
+        user : M_AppUser = M_AppUser.query.get(session["user_id"])
+        conversa_inicial = M_Conversa(t_appuser=user, titulo="Sessão inicial")
+        db.session.add(conversa_inicial)
+        db.session.commit()
+        session["conversa_id"] = conversa_inicial.id
+        return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
 
 
 
