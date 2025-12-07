@@ -7,7 +7,7 @@ Chatbot com IA utilizando GPT-5 Nano, por meio do framework Flask e Langchain, c
 # Lin => python3 -m venv venv
 ```
 ```
-# Win => venv/bin/Activate
+# Win => venv/scripts/Activate
 # Lin => source venv/bin/activate
 ```
 ```
