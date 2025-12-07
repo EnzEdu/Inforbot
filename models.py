@@ -1,14 +1,19 @@
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 db = SQLAlchemy()
 
 class M_AppUser(db.Model):
     __tablename__ = "t_appuser"
 
+    uuid            = db.Column(db.String(36), default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
     id              = db.Column(db.Integer, primary_key=True, autoincrement=True)
     criado_em       = db.Column(db.DateTime, default=datetime.now)
+    fotoPerfilPath  = db.Column(db.String(200), nullable=False)
+    descricao       = db.Column(db.String(400), nullable=False)
     nomeCompleto    = db.Column(db.String(400), unique=True, nullable=False)
     usuario         = db.Column(db.String(80), unique=True, nullable=False)
     email           = db.Column(db.String(200), unique=True, nullable=False)
@@ -24,6 +29,9 @@ class M_AppUser(db.Model):
 
     def __repr__(self):
         return f"<M_AppUser {self.usuario}>"
+    
+    def set_foto_perfil_caminho(self, path: str):
+        self.fotoPerfilPath = path
 
     def set_senha_hasheada(self, senha: str):
         self.senha_hash = generate_password_hash(senha)

@@ -1,10 +1,13 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, abort
 from flask_migrate import Migrate
 from flasgger import Swagger
+from werkzeug.utils import secure_filename
 from typing import List
 from models import db, M_AppUser, M_Conversa, M_Mensagem
-from config import Config
+from config import Config, PASTA_USERS
 from agent import Agent
+import os
+import uuid
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -26,7 +29,7 @@ def home():
             description: Erro no server.
     """
     if 'usuario' in session:
-        return redirect(url_for('dashboard', user_name=session["usuario"], conversa_id=session["conversa_id"]))
+        return redirect(url_for('dashboard', user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
     return redirect(url_for('login'))
 
 
@@ -73,6 +76,7 @@ def login():
             conversa_padrao : M_Conversa = M_Conversa.query.filter_by(t_appuser=user).first()
 
             session["user_id"] = user.id
+            session["user_uuid"] = user.uuid
             session["usuario"] = user.usuario
             if conversa_padrao:
                 session["conversa_id"] = conversa_padrao.id
@@ -82,7 +86,7 @@ def login():
                 db.session.add(conversa_inicial)
                 db.session.commit()
                 session["conversa_id"] = conversa_inicial.id
-            return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+            return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
         else:
             flash("Credenciais invalidas.")
             return redirect(url_for("login"))
@@ -160,18 +164,42 @@ def register():
             description: Erro no server.
     """
     if request.method == "POST":
+        #fotoPerfil = request.form["fileInput"]      # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        fotoPerfil = request.files.get("fileInput")
+        descricao = request.form["desc"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
         nomeCompleto = request.form["nome"].strip()
         usuario = request.form["usuario"].strip()
         email = request.form["email"].strip().lower()
         senha = request.form["senha"]
+
+        print(request.form)
+        print(request.files)
 
         # Check de campos em uso
         if M_AppUser.query.filter((M_AppUser.usuario == usuario) | (M_AppUser.email == email)).first():
             flash("Nome de usuario ou email em uso.")
             return redirect(url_for("register"))
 
-        user = M_AppUser(nomeCompleto=nomeCompleto, usuario=usuario, email=email)
+        #
+        user = M_AppUser(
+            uuid=str(uuid.uuid4()),
+            descricao=descricao,
+            nomeCompleto=nomeCompleto, 
+            usuario=usuario, 
+            email=email)
         user.set_senha_hasheada(senha)
+
+        #
+        if fotoPerfil:
+            PASTA_USER = os.path.join(PASTA_USERS, str(user.uuid))
+            os.makedirs(PASTA_USER, exist_ok=True)
+
+            fotoPfpCaminho = os.path.join(PASTA_USER, secure_filename(fotoPerfil.filename))
+            fotoPerfil.save(fotoPfpCaminho)
+        else:
+            fotoPfpCaminho = ''
+        user.set_foto_perfil_caminho(fotoPfpCaminho)
+
         # PLACEHOLDER
         conversa_inicial = M_Conversa(t_appuser=user, titulo="Sessão inicial")
 
@@ -187,8 +215,8 @@ def register():
 
 
 
-@app.route("/<user_name>/dashboard/<conversa_id>", methods=["GET", "POST"])
-def dashboard(user_name, conversa_id):
+@app.route("/<user_uuid>/dashboard/<conversa_id>", methods=["GET", "POST"])
+def dashboard(user_uuid, conversa_id):
     """
     Endpoint de acesso a uma conversa do dashboard.
     ---
@@ -202,11 +230,11 @@ def dashboard(user_name, conversa_id):
         Acesso proibido se a sessão não estiver batendo com o login.
     
     parameters:
-      - name: user_name
+      - name: user_uuid
         in: path
         type: string
         required: true
-        description: Nome do usuário.
+        description: UUID do usuário.
 
       - name: conversa_id
         in: path
@@ -223,7 +251,7 @@ def dashboard(user_name, conversa_id):
             description: Erro no server.
     """
     # Previne acessos externos
-    if session.get("usuario") != user_name:
+    if session.get("user_uuid") != user_uuid:
         abort(403)
 
     if request.method == "POST":
@@ -441,7 +469,7 @@ def deletar_conversa(conversa_id):
     ultima_conversa : M_Conversa = M_Conversa.query.filter_by(appuser_id=session["user_id"]).first()
     if ultima_conversa:
         session["conversa_id"] = ultima_conversa.id
-        return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+        return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
     else:
         # Cria uma sessao caso ainda nao exista
         user : M_AppUser = M_AppUser.query.get(session["user_id"])
@@ -449,7 +477,7 @@ def deletar_conversa(conversa_id):
         db.session.add(conversa_inicial)
         db.session.commit()
         session["conversa_id"] = conversa_inicial.id
-        return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+        return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
 
 
 
