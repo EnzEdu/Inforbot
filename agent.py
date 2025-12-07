@@ -10,11 +10,12 @@ class ChatAgent:
         self.llm = ChatOpenAI(
             model="gpt-5-nano",
             api_key=api_key,
-            temperature=0.7
+            temperature=0.7,
+            reasoning_effort="low"  # diminui o tempo de esforço de pensamento para respostas mais rapidas (minimal, low)
         )
         self.agent = create_agent(
-            tools=tools,            # your decorated functions
-            model=self.llm,              # ChatOpenAI model
+            tools=tools,                # ferramentas/agentes
+            model=self.llm,             # modelo do gpt
         )
 
     def enviar_mensagem(self, lista_msg, msg_usuario):
