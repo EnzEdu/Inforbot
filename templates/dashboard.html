@@ -27,14 +27,14 @@
     <div class="main-layout">
         <div id="session-sidebar">
             <form method="POST">
-            <button type="submit" id="new-chat-btn" title="Nova Conversa">
-                <i class='bx bx-plus-medical'></i> Novo Chat
-            </button>
+                <button type="submit" id="new-chat-btn" title="Nova Conversa">
+                    <i class='bx bx-plus-medical'></i> Novo Chat
+                </button>
             </form>
             
             <div id="session-list">
                 {% for conversa in lista_conversas %}
-                    <a href="/{{ session['usuario'] }}/dashboard/{{ conversa.id }}">
+                    <a href="/{{ session['user_uuid'] }}/dashboard/{{ conversa.id }}">
                         <div class="session-item active" data-session-id="{{ conversa.id }}">
                             <span class="session-title">{{ conversa.titulo }}</span>
                             <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
