@@ -8,6 +8,7 @@ from config import Config, PASTA_USERS
 from agent import Agent
 import os
 import uuid
+import shutil
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -475,6 +476,11 @@ def deletar_conversa(conversa_id):
             # Deleta a conversa em si
             db.session.delete(conversa)
             
+            # Deleta a pasta relacionada, se existir
+            PASTA_CONV = os.path.join(PASTA_USERS, session.get("user_uuid"), session.get("conversa_id"))
+            if (os.path.exists(PASTA_CONV)):
+                shutil.rmtree(PASTA_CONV)
+
             # Salva as alterações
             db.session.commit()
             
