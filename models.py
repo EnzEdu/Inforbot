@@ -99,6 +99,7 @@ class M_Documento(db.Model):
     enviada_em      = db.Column(db.DateTime, default=datetime.now)
     nome            = db.Column(db.String(100), nullable=False)
     path            = db.Column(db.String(300), nullable=False)
+    openai_id       = db.Column(db.String(200), nullable=False)
 
     # Mensagem esta ligada a 1 conversa
     t_conversa = db.relationship("M_Conversa", back_populates="documentos")

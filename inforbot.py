@@ -208,7 +208,7 @@ def register():
         db.session.commit()
 
         return redirect(url_for("login"))
-    return render_template("register.html")
+    return render_template("PLACEHOLDER_register.html")
 
 
 
@@ -263,11 +263,19 @@ def dashboard(user_uuid, conversa_id):
             docCaminho = os.path.join(PASTA_CONV, secure_filename(documento.filename))
             documento.save(docCaminho)
 
+            # Salva o documento na OpenAI
+            with open(docCaminho, "rb") as f:
+                uploaded = Agent.llm_sdk.files.create(
+                    file=f,
+                    purpose="user_data"
+                )
+
             # Salva o documento na db
             doc = M_Documento(
                 conversa_id=session["conversa_id"],
                 nome=secure_filename(documento.filename), 
-                path=docCaminho
+                path=docCaminho,
+                openai_id=uploaded.id
             )
             db.session.add(doc)
             db.session.commit()
@@ -299,9 +307,9 @@ def dashboard(user_uuid, conversa_id):
         lista_mensagens = [result for result in lista_mensagens if "Resumo:" not in result["texto"] and "Titulo:" not in result["texto"]]
         lista_documentos = [doc.nome for doc in documentos]
 
-        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens, lista_documentos=documentos)
+        return render_template("PLACEHOLDER_dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens, lista_documentos=documentos)
     else:
-        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[], lista_documentos=[])
+        return render_template("PLACEHOLDER_dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[], lista_documentos=[])
 
 
 
@@ -343,7 +351,7 @@ def enviar_mensagem():
     data = request.get_json()
     mensagem_usuario = data.get("message")
     conversa_id = data.get("conversa_id")
-    documentos_escolhidos_ids = data.get("documentosEscolhidos") # PLACEHOLDER: trocar pelo campo no JSON.stringify em dashboard.js 
+    documentos_escolhidos_llm_ids = data.get("documentosEscolhidos") # PLACEHOLDER: trocar pelo campo no JSON.stringify em dashboard.js 
 
     if not mensagem_usuario:
         return jsonify({"error": "Nenhuma mensagem digitada."}), 400
@@ -368,7 +376,7 @@ def enviar_mensagem():
             "Retorne um resumo, utilizando o menor número possível de tokens, " \
             "mas mantendo a descrição de pontos importantes que podem vir a ser utilizados " \
             "novamente na conversa. Comece sua resposta com a palavra Resumo."
-        ai_text_res = Agent.enviar_mensagem(historico1, resumo)
+        ai_text_res = Agent.enviar_mensagem(historico1, resumo, [])
 
         # Salva a resposta
         ai_msg_res = M_Mensagem(
@@ -393,8 +401,16 @@ def enviar_mensagem():
         historico = historico[(qnt_faltante_resumo * -1):]
 
 
+    #
+    docs_enviados = []
+    if len(documentos_escolhidos_llm_ids) != 0:
+        lista_docs : List[M_Documento] = M_Documento.query.filter((M_Documento.openai_id.in_(documentos_escolhidos_llm_ids))).all()
+        lista_info = [{"nome": db_doc_object.nome, "openai_id": db_doc_object.openai_id} for db_doc_object in lista_docs]
+        docs_enviados = lista_info
+
+
     # Envia mensagem para o modelo
-    ai_text = Agent.enviar_mensagem(historico, mensagem_usuario)
+    ai_text = Agent.enviar_mensagem(historico, mensagem_usuario, docs_enviados)
 
     # Salva a pergunta
     db.session.expunge_all()
@@ -430,7 +446,7 @@ def enviar_mensagem():
             "Retorne um titulo para esta conversa, baseado no dialogo recente. " \
             "Sua resposta deve começar com \"Titulo:\", seguido por sua sugestão de título. Nada mais." \
             "Sua sugestão de título está limitada a no máximo 5 palavras."
-        ai_text_res = Agent.enviar_mensagem(historico, titulo)
+        ai_text_res = Agent.enviar_mensagem(historico, titulo, [])
 
         # Salva a resposta
         ai_msg_res = M_Mensagem(
@@ -473,6 +489,11 @@ def deletar_conversa(conversa_id):
 
     if conversa:
         try:
+            # Deleta os arquivos na OpenAI
+            documentos : List[M_Documento] = M_Documento.query.filter_by(conversa_id=conversa_id).all()
+            for doc in documentos:
+                Agent.llm_sdk.files.delete(doc.openai_id)
+
             # Deleta a conversa em si
             db.session.delete(conversa)
             
