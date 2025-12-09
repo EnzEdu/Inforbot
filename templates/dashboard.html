@@ -26,17 +26,25 @@
 
     <div class="main-layout">
         <div id="session-sidebar">
-            <button id="new-chat-btn" title="Nova Conversa">
+            <form method="POST">
+            <button type="submit" id="new-chat-btn" title="Nova Conversa">
                 <i class='bx bx-plus-medical'></i> Novo Chat
             </button>
+            </form>
             
             <div id="session-list">
-                <div class="session-item active" data-session-id="initial-session">
-                    <span class="session-title">Sessão Inicial</span>
-                    <button class="delete-session-btn" title="Excluir">
-                        <i class='bx bx-trash'></i>
-                    </button>
-                </div>
+                {% for conversa in lista_conversas %}
+                    <a href="/{{ session['usuario'] }}/dashboard/{{ conversa.id }}">
+                        <div class="session-item active" data-session-id="{{ conversa.id }}">
+                            <span class="session-title">{{ conversa.titulo }}</span>
+                            <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="delete-session-btn" title="Excluir">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </form>
+                        </div>
+                    </a>
+                {% endfor %}
             </div>
         </div>
 
@@ -58,6 +66,7 @@
                         {% endif %}
                     {% endfor %}
                 </div>
+
                 <form id="chat-form" class="chat-input-area">
                     <textarea type="text" id="user-input" name="user_message" placeholder="Pergunte ao Bot..." rows="1" required></textarea>
                     <button type="submit" id="send-btn" class="send-btn">
@@ -69,7 +78,8 @@
     </div>
     <script src="/static/js/dashboard.js"></script>
     <script>
-        const conversaAtualId = {{ conversa.id }};
+        const conversaAtualId = {{ session['conversa_id'] }};
     </script>
+
 </body>
 </html>

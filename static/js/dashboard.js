@@ -19,27 +19,6 @@ textarea.addEventListener('input', () => {
     textarea.style.height = textarea.scrollHeight + 'px';
 });
 
-// --- 1. GESTÃO DO ID DE SESSÃO ÚNICO ---
-const SESSION_KEY = 'chat-user-id';
-
-function getOrCreateSessionId() {
-    let sessionId = localStorage.getItem(SESSION_KEY);
-    
-    // Se não houver ID, gera um novo (UUID simples)
-    if (!sessionId) {
-        sessionId = crypto.randomUUID(); // Usa a API Web Crypto para gerar um UUID
-        localStorage.setItem(SESSION_KEY, sessionId);
-        console.log("Novo ID de Sessão gerado:", sessionId);
-    } else {
-        console.log("ID de Sessão existente:", sessionId);
-    }
-    return sessionId;
-}
-
-// Inicializa o ID de sessão quando o script é carregado
-const userId = getOrCreateSessionId();
-
-
 // --- 2. LÓGICA DE ENVIO E RECEBIMENTO DE MENSAGENS ---
 const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
@@ -75,8 +54,7 @@ chatForm.addEventListener('submit', async (e) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                // O ID de sessão é o ponto-chave para o backend manter o histórico isolado
-                session_id: userId, 
+                session_id: "teste", 
                 message: userMessage,
                 conversa_id: conversaAtualId,
             }),

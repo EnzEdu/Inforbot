@@ -32,25 +32,6 @@ class ChatAgent:
         
         # Envia para o agente
         response = self.agent.invoke(dict_msg)
-        
-
-
-        # Se alguma ferramenta foi chamada pelo modelo
-        if response.get("tool_calls"):
-            for chamada in response["tool_calls"]:
-                tool_nome = chamada["name"]
-                tool_args = chamada["args"]
-
-                # Executa cada ferramenta chamada
-                tool = next(t for t in tools if t.name == tool_nome)
-                tool_result = tool.run(tool_args)
-
-                # Adiciona o resultado de cada ferramenta
-                dict_msg["messages"].append({"role": "tool", "content": tool_result})
-
-            # Recebe a resposta apos incluir os dados das pesquisas
-            response_final = self.agent.invoke(dict_msg)
-            response = response_final
 
 
 
