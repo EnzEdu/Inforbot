@@ -212,6 +212,64 @@ def register():
 
 
 
+@app.route("/update", methods=["GET", "POST"])
+def update():
+    """
+    """
+    if request.method == "POST":
+        fotoPerfil = request.files.get("fileInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        descricao = request.form["desc"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
+        nomeCompleto = request.form["nome"].strip()
+        usuario = request.form["usuario"].strip()
+        email = request.form["email"].strip().lower()
+        senha = request.form["senha"]
+
+        # Pega a instancia do usuario no db
+        user : M_AppUser = M_AppUser.query.filter_by(uuid=session.get("user_uuid")).first()
+
+        # Check de campos em uso
+        if M_AppUser.query.filter((M_AppUser.usuario == usuario) | (M_AppUser.email == email)).first():
+            flash("Nome de usuario ou email em uso.")
+            return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
+        
+
+        if (fotoPerfil):
+            PASTA_USER = os.path.join(PASTA_USERS, str(user.uuid))
+            if not os.path.isdir(PASTA_USER):
+                os.makedirs(PASTA_USER, exist_ok=True)
+            
+            # Limpa o path da foto anterior
+            if (len(user.fotoPath) != 0):
+                os.remove(user.fotoPath)
+
+            # Salva a foto enviada
+            fotoPfpCaminho = os.path.join(PASTA_USER, secure_filename(fotoPerfil.filename))
+            fotoPerfil.save(fotoPfpCaminho)
+            user.set_foto_perfil_caminho(fotoPfpCaminho)
+
+        if (len(descricao) != 0):
+            user.descricao = descricao
+        
+        if (len(nomeCompleto) != 0):
+            user.nomeCompleto = nomeCompleto
+
+        if (len(usuario) != 0):
+            user.usuario = usuario
+
+        if (len(email) != 0):
+            user.email = email
+
+        if (len(senha) != 0):
+            user.set_senha_hasheada(senha)
+
+        # Salva o usuario modificado
+        db.session.commit()
+
+        return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
+    return render_template("PLACEHOLDER_update.html")
+
+
+
 @app.route("/<user_uuid>/dashboard/<conversa_id>", methods=["GET", "POST"])
 def dashboard(user_uuid, conversa_id):
     """
