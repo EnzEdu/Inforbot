@@ -19,7 +19,7 @@
                 <i class='bx bx-menu'></i>
             </button>
             <ul class="menu-dropdown">
-                <li><a href="edit_profile.html" id="editar-btn">Sua conta</a></li>
+                <li><a href="{{ url_for('editar_perfil') }}" id="editar-btn">Sua conta</a></li>
                 <li><a href="#" id="logout-btn">Sair</a></li>
             </ul>
         </div>
@@ -27,18 +27,18 @@
     <div class="container">
         <div class="img-box">
             <label for="foto_upload" class="upload-label">
-                <img id="preview-img" src="{{ foto_perfil }}" style="display: block;">
+                <img id="preview-img" src="{{ url_for('uploaded_file', user_uuid=session['user_uuid'], filename=user.foto) }}" style="display: block;">
                 <span class="upload-text">Clique para alterar foto</span>
             </label>
             <input type="file" id="foto_upload" name="foto_perfil" accept="image/*" onchange="mostrarPreview(event)">
         </div>
         <div class="form-box">
             <h1>Editar Perfil</h1>
-            <form action="{{ url_for('editar_perfil') }}" method="POST" enctype="multipart/form-data">
+            <form id="my-form" action="{{ url_for('editar_perfil') }}" method="POST" enctype="multipart/form-data">
                 <div class="input-box">
                     <label for="nome">Nome Completo:</label>
                     <div class="input-group">
-                        <input type="text" id="nome" name="nome" value="{{ user['nome'] }}" readonly>
+                        <input type="text" id="nome" name="nome" value="{{ user.nome }}" readonly>
                         <button type="button" class="edit-btn" onclick="habilitarEdicao('nome')">
                             <i class='bx bxs-edit'></i>
                         </button>
@@ -47,7 +47,7 @@
                 <div class="input-box">
                     <label for="usuario">Usuário:</label>
                     <div class="input-group">
-                        <input type="text" id="usuario" name="usuario" value="{{ user['usuario'] }}" readonly>
+                        <input type="text" id="usuario" name="usuario" value="{{ user.usuario }}" readonly>
                         <button type="button" class="edit-btn" onclick="habilitarEdicao('usuario')">
                             <i class='bx bxs-edit'></i>
                         </button>
@@ -56,7 +56,7 @@
                 <div class="input-box">
                     <label for="email">E-mail:</label>
                     <div class="input-group">
-                        <input type="email" id="email" name="email" value="{{ user['email'] }}" readonly>
+                        <input type="email" id="email" name="email" value="{{ user.email }}" readonly>
                         <button type="button" class="edit-btn" onclick="habilitarEdicao('email')">
                             <i class='bx bxs-edit'></i>
                         </button>
@@ -65,7 +65,7 @@
                 <div class="input-box s">
                     <label for="senha">Senha:</label>
                     <div class="input-group">
-                        <input type="password" id="senha" name="senha" value="{{ user['senha'] }}" readonly>
+                        <input type="password" id="senha" name="senha" value="{{ user.senha }}" readonly>
                         <button type="button" class="edit-btn" onclick="habilitarEdicao('senha')">
                             <i class='bx bxs-edit'></i>
                         </button>
@@ -87,6 +87,10 @@
             </form>
         </div>
     </div>
+    <script>
+        const userUUID = "{{ session['user_uuid'] }}";
+        const conversaAtualId = "{{ session['conversa_id'] }}";
+    </script>
     <script src="/static/js/edit_profile.js"></script>
 </body>
 </html>

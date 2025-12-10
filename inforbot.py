@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, abort
+from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, abort, send_from_directory
 from flask_migrate import Migrate
 from flasgger import Swagger
 from werkzeug.utils import secure_filename
@@ -166,6 +166,7 @@ def register():
     """
     if request.method == "POST":
         fotoPerfil = request.files.get("foto_perfil") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        print(request.files)
         descricao = request.form["descricao"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
         nomeCompleto = request.form["nome"].strip()
         usuario = request.form["usuario"].strip()
@@ -212,20 +213,35 @@ def register():
 
 
 
-@app.route("/update", methods=["GET", "POST"])
-def update():
+@app.route("/editar_perfil", methods=["GET", "POST"])
+def editar_perfil():
     """
     """
-    if request.method == "POST":
-        fotoPerfil = request.files.get("fileInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
-        descricao = request.form["desc"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
+    # Pega a instancia do usuario no db
+    user : M_AppUser = M_AppUser.query.filter_by(uuid=session.get("user_uuid")).first()
+
+    if request.method == "GET":
+        dados_usuario = {
+            "foto": os.path.basename(user.fotoPath),
+            "nome": "",
+            "usuario": "",
+            "email": "",
+            "senha": ""
+        }
+
+        if (user.fotoPath):
+            filename = os.path.relpath(user.fotoPath, app.config['UPLOAD_FOLDER'])
+        else:
+            filename=''
+
+    else:
+        fotoPerfil = request.files.get("foto_perfil") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        descricao = request.form["descricao"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
         nomeCompleto = request.form["nome"].strip()
         usuario = request.form["usuario"].strip()
         email = request.form["email"].strip().lower()
         senha = request.form["senha"]
-
-        # Pega a instancia do usuario no db
-        user : M_AppUser = M_AppUser.query.filter_by(uuid=session.get("user_uuid")).first()
+        print(request.files)
 
         # Check de campos em uso
         if M_AppUser.query.filter((M_AppUser.usuario == usuario) | (M_AppUser.email == email)).first():
@@ -266,7 +282,7 @@ def update():
         db.session.commit()
 
         return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
-    return render_template("edit_profile.html")
+    return render_template("edit_profile.html", user=dados_usuario, filename=filename)
 
 
 
@@ -610,6 +626,15 @@ def deletar_conversa(conversa_id):
         db.session.commit()
         session["conversa_id"] = conversa_inicial.id
         return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
+
+
+
+@app.route('/instance/users/<user_uuid>/<filename>', methods=["GET"])
+def uploaded_file(user_uuid, filename):
+    folder = os.path.join(app.config['UPLOAD_FOLDER'], "users", user_uuid)
+    print("Looking in:", folder)
+    print("File expected:", filename)
+    return send_from_directory(folder, filename)
 
 
 

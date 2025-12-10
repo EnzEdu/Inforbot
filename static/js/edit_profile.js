@@ -38,6 +38,31 @@ function habilitarEdicao(id) {
 // Cancelar edição
 function cancelarEdicao() {
     if (confirm('Deseja cancelar as alterações?')) {
-        window.location.href = "dashboard.html";
+        window.location.href = "/" + userUUID + "/dashboard" + "/" + conversaAtualId;
     }
 }
+
+//
+
+document.getElementById("my-form").addEventListener("submit", function(event) {
+    event.preventDefault(); // stop normal form submit
+
+    const form = event.target;
+    const formData = new FormData(form); // includes all fields inside the form
+
+    // include the file from outside the form
+    const fileInput = document.getElementById("foto_upload");
+    if (fileInput.files.length > 0) {
+        formData.append("foto_perfil", fileInput.files[0]);
+    }
+
+    // send using fetch WITHOUT await
+    fetch(form.action, {
+        method: "POST",
+        body: formData
+    }).then(() => {
+        window.location.href = "/" + userUUID + "/dashboard" + "/" + conversaAtualId;
+    });
+
+    // optional: show loading / disable button / etc.
+});

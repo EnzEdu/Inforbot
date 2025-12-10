@@ -42,6 +42,30 @@ function validarFormulario(event) {
     return true;
 }
 
+document.getElementById("my-form").addEventListener("submit", function(event) {
+    event.preventDefault(); // stop normal form submit
+
+    const form = event.target;
+    const formData = new FormData(form); // includes all fields inside the form
+
+    // include the file from outside the form
+    const fileInput = document.getElementById("foto_upload");
+    if (fileInput.files.length > 0) {
+        formData.append("foto_perfil", fileInput.files[0]);
+    }
+
+    // send using fetch WITHOUT await
+    fetch(form.action, {
+        method: "POST",
+        body: formData
+    }).then(() => {
+        window.location.href = "/login";
+    });
+
+    // optional: show loading / disable button / etc.
+});
+
+
 // Apresenta erros durante o registro
 function apresentarErro(msg) {
     alert(msg);

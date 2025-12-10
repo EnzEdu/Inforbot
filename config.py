@@ -8,3 +8,4 @@ class Config:
     SECRET_KEY = os.environ.get("INFORBOT_SECRET_KEY_PROD", "dev-secret-key")  # mudar em prod
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(SQLITE_PATH, "inforbot.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    UPLOAD_FOLDER = SQLITE_PATH
