@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain.agents import create_agent
 from openai import OpenAI
 import tiktoken
-from tools import tools
+from tools import tools, query_and_summarize
 from typing import List
 import os
 
@@ -14,7 +14,7 @@ class ChatAgent:
         self.llm = ChatOpenAI(
             model="gpt-5-nano",
             api_key=api_key,
-            temperature=0.7,
+            temperature=0.3,
             reasoning_effort="low"  # diminui o tempo de esforço de pensamento para respostas mais rapidas (minimal, low)
         )
         self.agent = create_agent(
@@ -41,13 +41,11 @@ class ChatAgent:
             ]
         }
 
-        for lista_info in docs_usuario:
+        if (len(docs_usuario) != 0):
+            contexto_docs = query_and_summarize(docs_usuario, msg_usuario)
             user_msg["content"].append({
-                "type": "file", 
-                "file": {
-                    "file_name": lista_info["nome"],
-                    "file_id": lista_info["openai_id"]
-                }})
+                "type": "text", 
+                "text": contexto_docs})
         
         dict_msg["messages"].append(user_msg)
         

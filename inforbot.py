@@ -363,19 +363,11 @@ def upload_pdf():
             docCaminho = os.path.join(PASTA_CONV, secure_filename(documento.filename))
             documento.save(docCaminho)
 
-            # Salva o documento na OpenAI
-            with open(docCaminho, "rb") as f:
-                uploaded = Agent.llm_sdk.files.create(
-                    file=f,
-                    purpose="user_data"
-                )
-
             # Salva o documento na db
             doc = M_Documento(
                 appuser_id=session.get("user_id"),
                 nome=secure_filename(documento.filename), 
                 path=docCaminho,
-                openai_id=uploaded.id
             )
             db.session.add(doc)
             db.session.commit()
@@ -399,9 +391,6 @@ def deletar_pdf(pdf_id):
 
     if request.method == "DELETE":
         if doc:
-            # Deleta o arquivo na OpenAI
-            Agent.llm_sdk.files.delete(doc.openai_id)
-    
             # Deleta o arquivo relacionado
             PASTA_ARQ = os.path.join(PASTA_USERS, session.get("user_uuid"), "docs", doc.nome)
             if (os.path.exists(PASTA_ARQ)):
@@ -511,7 +500,7 @@ def enviar_mensagem():
     docs_enviados = []
     if len(documentos_escolhidos_llm_ids) != 0:
         lista_docs : List[M_Documento] = M_Documento.query.filter((M_Documento.id.in_(documentos_escolhidos_llm_ids))).all()
-        lista_info = [{"nome": db_doc_object.nome, "openai_id": db_doc_object.openai_id} for db_doc_object in lista_docs]
+        lista_info = [db_doc_object.path for db_doc_object in lista_docs]
         docs_enviados = lista_info
 
 

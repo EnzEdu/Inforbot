@@ -107,7 +107,6 @@ class M_Documento(db.Model):
     enviado_em      = db.Column(db.DateTime, default=datetime.now)
     nome            = db.Column(db.String(100), nullable=False)
     path            = db.Column(db.String(300), nullable=False)
-    openai_id       = db.Column(db.String(200), nullable=False)
 
     # Documento esta ligado a 1 usuario
     t_appuser = db.relationship(
