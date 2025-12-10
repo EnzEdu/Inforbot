@@ -75,3 +75,100 @@ chatForm.addEventListener('submit', async (e) => {
         addMessage('bot', 'Ocorreu um erro na comunicação com o servidor.');
     }
 });
+
+// Constante de 50MB (definida globalmente)
+const LIMITE_CONTA_BYTES = 50 * 1024 * 1024; // 50MB
+
+function validarUpload(input) {
+    if (input.files && input.files[0]) {
+        const arquivo = input.files[0];
+        const tamanhoNovoArquivo = arquivo.size;
+
+        // "usoTotalBytes" é a variável que criamos no script do HTML
+        // Se ela não estiver definida por algum erro, assumimos 0
+        const ocupadoAtualmente = (typeof usoTotalBytes !== 'undefined') ? usoTotalBytes : 0;
+
+        const previsaoTotal = ocupadoAtualmente + tamanhoNovoArquivo;
+
+        // 1. Validação: A soma ultrapassa o limite?
+        if (previsaoTotal > LIMITE_CONTA_BYTES) {
+            // Cálculos para mostrar mensagem bonita em MB
+            const livre = (LIMITE_CONTA_BYTES - ocupadoAtualmente) / (1024 * 1024);
+            const tamanhoArquivoMB = tamanhoNovoArquivo / (1024 * 1024);
+
+            alert(`Upload negado!\n\nEspaço livre: ${livre.toFixed(2)} MB\nSeu arquivo: ${tamanhoArquivoMB.toFixed(2)} MB\n\nVocê precisa excluir alguns PDFs antigos para liberar espaço.`);
+            
+            input.value = ""; // Limpa o input
+            return;
+        }
+
+        // Se passou, envia!
+        document.getElementById('upload-form').submit();
+    }
+}
+
+// Deletar pdf
+async function deletarPdf(pdfId) {
+    if (!confirm("Tem certeza que deseja excluir este PDF?")) return;
+
+    try {
+        const response = await fetch(`/deletar_pdf/${pdfId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // 1. Remove o item visual da lista
+            const itemParaRemover = document.querySelector(`.pdf-item[data-id="${pdfId}"]`);
+            if (itemParaRemover) itemParaRemover.remove();
+
+            // 2. ATUALIZA A BARRA DE PROGRESSO E O TEXTO
+            // O backend nos mandou o 'novo_uso_bytes'
+            atualizarBarraArmazenamento(data.novo_uso_bytes);
+
+            // Atualiza a variável global para validações futuras de upload
+            usoTotalBytes = data.novo_uso_bytes; 
+            
+        } else {
+            alert("Erro ao excluir: " + (data.error || "Erro desconhecido"));
+        }
+    } catch (error) {
+        console.error("Erro:", error);
+        alert("Erro de conexão.");
+    }
+}
+
+// Auxiliar para atualizar a UI da barra
+function atualizarBarraArmazenamento(bytesAtuais) {
+    const LIMITE = 50 * 1024 * 1024; // 50MB
+    
+    // Converte para MB
+    const mbUsados = (bytesAtuais / (1024 * 1024)).toFixed(2);
+    
+    // Calcula porcentagem (limitada a 100%)
+    let porcentagem = (bytesAtuais / LIMITE) * 100;
+    if (porcentagem > 100) porcentagem = 100;
+    if (porcentagem < 0) porcentagem = 0;
+
+    // Atualiza o Texto no HTML
+    // Seleciona o span que contem o texto "XX.XXMB / 50MB"
+    const textoContainer = document.querySelector('.storage-text span:last-child');
+    if (textoContainer) {
+        textoContainer.innerText = `${mbUsados}MB / 50MB`;
+    }
+
+    // Atualiza a Largura da Barra
+    const barraFill = document.querySelector('.progress-bar-fill');
+    if (barraFill) {
+        barraFill.style.width = `${porcentagem}%`;
+        
+        // Opcional: Mudar cor se estiver cheio
+        if (porcentagem > 90) {
+            barraFill.style.backgroundColor = 'red';
+        } else {
+            barraFill.style.backgroundColor = '#5bb1b0';
+        }
+    }
+}
