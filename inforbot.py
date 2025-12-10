@@ -165,8 +165,8 @@ def register():
             description: Erro no server.
     """
     if request.method == "POST":
-        fotoPerfil = request.files.get("fileInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
-        descricao = request.form["desc"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
+        fotoPerfil = request.files.get("foto_perfil") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        descricao = request.form["descricao"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
         nomeCompleto = request.form["nome"].strip()
         usuario = request.form["usuario"].strip()
         email = request.form["email"].strip().lower()
@@ -208,7 +208,7 @@ def register():
         db.session.commit()
 
         return redirect(url_for("login"))
-    return render_template("PLACEHOLDER_register.html")
+    return render_template("register.html")
 
 
 
@@ -266,7 +266,7 @@ def update():
         db.session.commit()
 
         return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
-    return render_template("PLACEHOLDER_update.html")
+    return render_template("edit_profile.html")
 
 
 
@@ -310,12 +310,54 @@ def dashboard(user_uuid, conversa_id):
         abort(403)
 
     if request.method == "POST":
-        documento = request.files.get("pdfInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input do documento
+        nova_conversa = M_Conversa(appuser_id=session["user_id"], titulo="Sessão inicial")
+        db.session.add(nova_conversa)
+        db.session.commit()
+        session["conversa_id"] = nova_conversa.id
+    else:
+        if (session["conversa_id"]):
+            session["conversa_id"] = conversa_id
+
+    # Recebe a lista de conversas
+    lista_conversas = M_Conversa.query.filter((M_Conversa.appuser_id == session["user_id"])).all()
+
+    if (session.get("conversa_id")):
+        # Recebe a lista de mensagens da conversa selecionada
+        conversa : M_Conversa = M_Conversa.query.filter(((M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.id == conversa_id))).first()
+        mensagens : List[M_Mensagem] = M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa.id)).all()
+        documentos : List[M_Documento] = M_Documento.query.filter((M_Documento.appuser_id == session.get("user_id"))).all()
+
+        # Converte em uma lista de tuplas (mais controlavel no html)
+        lista_mensagens = [{
+            "autor": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
+            "texto": mensagem.texto
+        } for mensagem in mensagens]
+        lista_mensagens = [result for result in lista_mensagens if "Resumo:" not in result["texto"] and "Titulo:" not in result["texto"]]
+        #lista_pdfs = [doc.nome for doc in documentos]
+
+        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens, lista_pdfs=documentos)
+    else:
+        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[], lista_pdfs=[])
+
+
+
+
+
+
+
+
+@app.route("/upload_pdf", methods=["POST"])
+def upload_pdf():
+    """
+    Docstring for upload_pdf
+    """
+    if request.method == "POST":
+        documento = request.files.get("pdf_file") # PLACEHOLDER: trocar pelo termo no campo "name" no input do documento
 
         # Se documento esta sendo enviado
         if (documento):
             # Salva o documento localmente
-            PASTA_CONV = os.path.join(PASTA_USERS, session.get("user_uuid"), session.get("conversa_id"))
+            PASTA_CONV = os.path.join(PASTA_USERS, session.get("user_uuid"), "docs")
             os.makedirs(PASTA_CONV, exist_ok=True)
 
             docCaminho = os.path.join(PASTA_CONV, secure_filename(documento.filename))
@@ -330,7 +372,7 @@ def dashboard(user_uuid, conversa_id):
 
             # Salva o documento na db
             doc = M_Documento(
-                conversa_id=session["conversa_id"],
+                appuser_id=session.get("user_id"),
                 nome=secure_filename(documento.filename), 
                 path=docCaminho,
                 openai_id=uploaded.id
@@ -338,36 +380,42 @@ def dashboard(user_uuid, conversa_id):
             db.session.add(doc)
             db.session.commit()
 
-        # Se conversa esta sendo criada
-        else:
-            nova_conversa = M_Conversa(appuser_id=session["user_id"], titulo="Sessão inicial")
-            db.session.add(nova_conversa)
+    return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
+
+
+
+
+
+
+
+
+
+@app.route("/deletar_pdf/<pdf_id>", methods=["DELETE"])
+def deletar_pdf(pdf_id):
+    """
+    Docstring for deletar_pdf
+    """
+    doc : M_Documento = M_Documento.query.filter_by(id=pdf_id).first()
+
+    if request.method == "DELETE":
+        if doc:
+            # Deleta o arquivo na OpenAI
+            Agent.llm_sdk.files.delete(doc.openai_id)
+    
+            # Deleta o arquivo relacionado
+            PASTA_ARQ = os.path.join(PASTA_USERS, session.get("user_uuid"), "docs", doc.nome)
+            if (os.path.exists(PASTA_ARQ)):
+                os.remove(PASTA_ARQ)
+
+            # Deleta a conversa em si
+            db.session.delete(doc)
             db.session.commit()
-            session["conversa_id"] = nova_conversa.id
-    else:
-        if (session["conversa_id"]):
-            session["conversa_id"] = conversa_id
 
-    # Recebe a lista de conversas
-    lista_conversas = M_Conversa.query.filter((M_Conversa.appuser_id == session["user_id"])).all()
 
-    if (session.get("conversa_id")):
-        # Recebe a lista de mensagens da conversa selecionada
-        conversa : M_Conversa = M_Conversa.query.filter(((M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.id == conversa_id))).first()
-        mensagens : List[M_Mensagem] = M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa.id)).all()
-        documentos : List[M_Documento] = M_Documento.query.filter((M_Documento.conversa_id == conversa.id)).all()
+            return jsonify({"success": True})
+    return jsonify({"success": False})
 
-        # Converte em uma lista de tuplas (mais controlavel no html)
-        lista_mensagens = [{
-            "autor": "USUARIO" if mensagem.autor == session["usuario"] else "BOT", 
-            "texto": mensagem.texto
-        } for mensagem in mensagens]
-        lista_mensagens = [result for result in lista_mensagens if "Resumo:" not in result["texto"] and "Titulo:" not in result["texto"]]
-        lista_documentos = [doc.nome for doc in documentos]
 
-        return render_template("PLACEHOLDER_dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens, lista_documentos=documentos)
-    else:
-        return render_template("PLACEHOLDER_dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[], lista_documentos=[])
 
 
 
@@ -462,7 +510,7 @@ def enviar_mensagem():
     #
     docs_enviados = []
     if len(documentos_escolhidos_llm_ids) != 0:
-        lista_docs : List[M_Documento] = M_Documento.query.filter((M_Documento.openai_id.in_(documentos_escolhidos_llm_ids))).all()
+        lista_docs : List[M_Documento] = M_Documento.query.filter((M_Documento.id.in_(documentos_escolhidos_llm_ids))).all()
         lista_info = [{"nome": db_doc_object.nome, "openai_id": db_doc_object.openai_id} for db_doc_object in lista_docs]
         docs_enviados = lista_info
 
@@ -547,18 +595,8 @@ def deletar_conversa(conversa_id):
 
     if conversa:
         try:
-            # Deleta os arquivos na OpenAI
-            documentos : List[M_Documento] = M_Documento.query.filter_by(conversa_id=conversa_id).all()
-            for doc in documentos:
-                Agent.llm_sdk.files.delete(doc.openai_id)
-
             # Deleta a conversa em si
             db.session.delete(conversa)
-            
-            # Deleta a pasta relacionada, se existir
-            PASTA_CONV = os.path.join(PASTA_USERS, session.get("user_uuid"), session.get("conversa_id"))
-            if (os.path.exists(PASTA_CONV)):
-                shutil.rmtree(PASTA_CONV)
 
             # Salva as alterações
             db.session.commit()

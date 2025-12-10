@@ -27,6 +27,14 @@ class M_AppUser(db.Model):
         order_by="M_Conversa.criado_em"
     )
 
+    # Usuario pode ter n documentos
+    documentos = db.relationship(
+        "M_Documento",
+        back_populates="t_appuser",
+        cascade="all, delete-orphan",
+        order_by="M_Documento.enviado_em"
+    )
+
     def __repr__(self):
         return f"<M_AppUser {self.usuario}>"
     
@@ -66,12 +74,12 @@ class M_Conversa(db.Model):
     )
 
     # Conversa pode ter n documentos
-    documentos = db.relationship(
-        "M_Documento",
-        back_populates="t_conversa",
-        cascade="all, delete-orphan",
-        order_by="M_Documento.enviada_em"
-    )
+    #documentos = db.relationship(
+    #    "M_Documento",
+    #    back_populates="t_conversa",
+    #    cascade="all, delete-orphan",
+    #    order_by="M_Documento.enviada_em"
+    #)
 
 
 
@@ -94,12 +102,15 @@ class M_Mensagem(db.Model):
 class M_Documento(db.Model):
     __tablename__ = "t_documento"
 
-    conversa_id     = db.Column(db.Integer, db.ForeignKey("t_conversa.id"), nullable=False) # chave estrangeira
+    appuser_id      = db.Column(db.Integer, db.ForeignKey("t_appuser.id"), nullable=False) # chave estrangeira
     id              = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    enviada_em      = db.Column(db.DateTime, default=datetime.now)
+    enviado_em      = db.Column(db.DateTime, default=datetime.now)
     nome            = db.Column(db.String(100), nullable=False)
     path            = db.Column(db.String(300), nullable=False)
     openai_id       = db.Column(db.String(200), nullable=False)
 
-    # Mensagem esta ligada a 1 conversa
-    t_conversa = db.relationship("M_Conversa", back_populates="documentos")
+    # Documento esta ligado a 1 usuario
+    t_appuser = db.relationship(
+        "M_AppUser", 
+        back_populates="documentos"
+    )

@@ -36,16 +36,14 @@
                 </form>
                 <div id="chat-list" class="list-container">
                     {% for conversa in lista_conversas %}
-                        <a href="/{{ session['usuario'] }}/dashboard/{{ conversa.id }}">
-                            <div class="session-item active" data-session-id="{{ conversa.id }}">
-                                <span class="session-title">{{ conversa.titulo }}</span>
-                                <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
-                                    <button type="submit" class="delete-session-btn" title="Excluir">
-                                        <i class='bx bx-trash'></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </a>
+                        <div class="session-item active" data-session-id="{{ conversa.id }}" onclick="window.location.href='/{{ session['user_uuid'] }}/dashboard/{{ conversa.id }}';">
+                            <span class="session-title">{{ conversa.titulo }}</span>
+                            <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="delete-session-btn" title="Excluir">
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            </form>
+                        </div>
                     {% endfor %}
                 </div>
             </div>
@@ -54,26 +52,18 @@
 
             <div class="sidebar-section">
                 <h3 class="section-title">Meus PDFs</h3>
-                <div class="storage-container">
-                    <div class="storage-text">
-                        <span>Armazenamento:</span>
-                        <span>{{ (uso_total_bytes / 1024 / 1024)|round(2) }}MB / 50MB</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill" style="width: {{ (uso_total_bytes / (50 * 1024 * 1024)) * 100 }}%;"></div>
-                    </div>
-                </div>
+
                 <button id="add-pdf-btn" onclick="document.getElementById('pdf-upload-input').click();">
                     <i class='bx bxs-file-pdf'></i> Adicionar PDF
                 </button>
                 <form id="upload-form" action="{{ url_for('upload_pdf') }}" method="POST" enctype="multipart/form-data" style="display: none;">
-                    <input type="file" id="pdf-upload-input" name="pdf_file" accept="application/pdf" onchange="document.getElementById('upload-form').submit();">
+                    <input type="file" id="pdf-upload-input" name="pdf_file" accept="application/pdf" onchange="validarUpload(this); document.getElementById('upload-form').submit();">
                 </form>
                 <div id="pdf-list" class="list-container">
                     {% for pdf in lista_pdfs %}
                     <div class="session-item pdf-item" data-id="{{ pdf.id }}">
                         <input type="checkbox" name="selected_pdfs" value="{{ pdf.id }}" class="pdf-checkbox">
-                        <span class="session-title">{{ pdf.nome_arquivo }}</span>
+                        <span class="session-title">{{ pdf.nome }}</span>
                         <button class="delete-session-btn" onclick="deletarPdf('{{ pdf.id }}')">
                             <i class='bx bx-trash'></i>
                         </button>
@@ -112,11 +102,6 @@
     <script src="/static/js/dashboard.js"></script>
     <script>
         const conversaAtualId = {{ session['conversa_id'] }};
-
-        // O Flask injeta o valor aqui (se for None, assume 0)
-        const conversaAtualId = {{ session['conversa_id'] if session.get('conversa_id') else 'null' }};
-        // AQUI: O Python informa quantos bytes o usuário já usou
-        const usoTotalBytes = {{ uso_total_bytes | default(0) }};
     </script>
 </body>
 </html>

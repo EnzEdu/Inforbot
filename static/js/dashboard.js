@@ -42,6 +42,12 @@ chatForm.addEventListener('submit', async (e) => {
     const userMessage = userInput.value.trim();
     if (userMessage === '') return; // Não envia mensagens vazias
 
+    const checkedValues = Array.from(
+        document.querySelectorAll(".pdf-checkbox:checked")
+    ).map(cb => cb.value);
+    console.log("Itens:", checkedValues);
+
+
     // 1. Exibe a mensagem do usuário
     addMessage('user', userMessage);
     userInput.value = ''; // Limpa o campo de entrada
@@ -57,6 +63,7 @@ chatForm.addEventListener('submit', async (e) => {
                 session_id: "teste", 
                 message: userMessage,
                 conversa_id: conversaAtualId,
+                documentosEscolhidos: checkedValues,
             }),
         });
 
@@ -86,17 +93,17 @@ function validarUpload(input) {
 
         // "usoTotalBytes" é a variável que criamos no script do HTML
         // Se ela não estiver definida por algum erro, assumimos 0
-        const ocupadoAtualmente = (typeof usoTotalBytes !== 'undefined') ? usoTotalBytes : 0;
+        //const ocupadoAtualmente = (typeof usoTotalBytes !== 'undefined') ? usoTotalBytes : 0;
 
-        const previsaoTotal = ocupadoAtualmente + tamanhoNovoArquivo;
+        //const previsaoTotal = ocupadoAtualmente + tamanhoNovoArquivo;
 
         // 1. Validação: A soma ultrapassa o limite?
-        if (previsaoTotal > LIMITE_CONTA_BYTES) {
+        if (tamanhoNovoArquivo > LIMITE_CONTA_BYTES) {
             // Cálculos para mostrar mensagem bonita em MB
-            const livre = (LIMITE_CONTA_BYTES - ocupadoAtualmente) / (1024 * 1024);
+            const livre = 1984; //(LIMITE_CONTA_BYTES - ocupadoAtualmente) / (1024 * 1024);
             const tamanhoArquivoMB = tamanhoNovoArquivo / (1024 * 1024);
 
-            alert(`Upload negado!\n\nEspaço livre: ${livre.toFixed(2)} MB\nSeu arquivo: ${tamanhoArquivoMB.toFixed(2)} MB\n\nVocê precisa excluir alguns PDFs antigos para liberar espaço.`);
+            alert(`Upload negado!\n\nTamanho máximo suportado para PDFs: 50 MB\nSeu arquivo: ${tamanhoArquivoMB.toFixed(2)} MB`);
             
             input.value = ""; // Limpa o input
             return;
@@ -126,10 +133,10 @@ async function deletarPdf(pdfId) {
 
             // 2. ATUALIZA A BARRA DE PROGRESSO E O TEXTO
             // O backend nos mandou o 'novo_uso_bytes'
-            atualizarBarraArmazenamento(data.novo_uso_bytes);
+            //atualizarBarraArmazenamento(data.novo_uso_bytes);
 
             // Atualiza a variável global para validações futuras de upload
-            usoTotalBytes = data.novo_uso_bytes; 
+            //usoTotalBytes = data.novo_uso_bytes; 
             
         } else {
             alert("Erro ao excluir: " + (data.error || "Erro desconhecido"));
