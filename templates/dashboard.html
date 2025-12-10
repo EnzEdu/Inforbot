@@ -19,6 +19,7 @@
                 <i class='bx bx-menu'></i>
             </button>
             <ul class="menu-dropdown">
+                <li><a href="edit_profile.html" id="editar-btn">Sua conta</a></li>
                 <li><a href="#" id="logout-btn">Sair</a></li>
             </ul>
         </div>
@@ -26,25 +27,50 @@
 
     <div class="main-layout">
         <div id="session-sidebar">
-            <form method="POST">
-            <button type="submit" id="new-chat-btn" title="Nova Conversa">
-                <i class='bx bx-plus-medical'></i> Novo Chat
-            </button>
-            </form>
-            
-            <div id="session-list">
-                {% for conversa in lista_conversas %}
-                    <a href="/{{ session['usuario'] }}/dashboard/{{ conversa.id }}">
-                        <div class="session-item active" data-session-id="{{ conversa.id }}">
-                            <span class="session-title">{{ conversa.titulo }}</span>
-                            <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
-                                <button type="submit" class="delete-session-btn" title="Excluir">
-                                    <i class='bx bx-trash'></i>
-                                </button>
-                            </form>
-                        </div>
-                    </a>
-                {% endfor %}
+            <div class="sidebar-section">
+                <h3 class="section-title">Conversas</h3>
+                <form method="POST">
+                    <button type="submit" id="new-chat-btn" title="Nova Conversa">
+                        <i class='bx bx-plus-medical'></i> Novo Chat
+                    </button>
+                </form>
+                <div id="chat-list" class="list-container">
+                    {% for conversa in lista_conversas %}
+                        <a href="/{{ session['usuario'] }}/dashboard/{{ conversa.id }}">
+                            <div class="session-item active" data-session-id="{{ conversa.id }}">
+                                <span class="session-title">{{ conversa.titulo }}</span>
+                                <form action="{{ url_for('deletar_conversa', conversa_id=conversa.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="delete-session-btn" title="Excluir">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <hr class="sidebar-divider">
+
+            <div class="sidebar-section">
+                <h3 class="section-title">Meus PDFs</h3>
+                <button id="add-pdf-btn" onclick="document.getElementById('pdf-upload-input').click();">
+                    <i class='bx bxs-file-pdf'></i> Adicionar PDF
+                </button>
+                <form id="upload-form" action="{{ url_for('upload_pdf') }}" method="POST" enctype="multipart/form-data" style="display: none;">
+                    <input type="file" id="pdf-upload-input" name="pdf_file" accept="application/pdf" onchange="document.getElementById('upload-form').submit();">
+                </form>
+                <div id="pdf-list" class="list-container">
+                    {% for pdf in lista_pdfs %}
+                    <div class="session-item pdf-item" data-id="{{ pdf.id }}">
+                        <input type="checkbox" name="selected_pdfs" value="{{ pdf.id }}" class="pdf-checkbox">
+                        <span class="session-title">{{ pdf.nome_arquivo }}</span>
+                        <button class="delete-session-btn" onclick="deletarPdf('{{ pdf.id }}')">
+                            <i class='bx bx-trash'></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -66,7 +92,6 @@
                         {% endif %}
                     {% endfor %}
                 </div>
-
                 <form id="chat-form" class="chat-input-area">
                     <textarea type="text" id="user-input" name="user_message" placeholder="Pergunte ao Bot..." rows="1" required></textarea>
                     <button type="submit" id="send-btn" class="send-btn">
@@ -80,6 +105,5 @@
     <script>
         const conversaAtualId = {{ session['conversa_id'] }};
     </script>
-
 </body>
 </html>

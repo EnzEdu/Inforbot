@@ -168,100 +168,152 @@ body {
     }
 }
 
-/* NOVO: Layout principal Flexbox */
+/*Layout principal Flexbox */
 .main-layout {
     display: flex;
     width: 100%;
     background: transparent;
     box-shadow: 0 0 10px rgba(0, 0, 0, .2);
-    /* Ocupa a altura total da tela menos a altura da navbar */
     height: calc(100vh - 60px); 
-    margin-top: 60px; /* Desce o layout para baixo da navbar fixa */
-    max-width: 23000px; /* Dá mais espaço para a barra lateral */
+    margin-top: 60px;
+    max-width: 23000px;
 }
 
-/* --- Estilos da Barra Lateral (Sidebar) --- */
+/* Ajuste no container da Sidebar */
 #session-sidebar {
     display: flex;
     flex-direction: column;
-    width: 250px; /* Largura fixa para a barra lateral */
-    min-width: 200px;
-    background-color: #f8f8f8;
-    background: transparent;
-    backdrop-filter: blur(10px);
-    border-right: 1px solid lightgrey;
-    padding: 20px 10px;
-    overflow-y: auto; /* Permite rolagem se houver muitas sessões */
+    width: 280px;
+    min-width: 250px;
+    background-color: rgba(120, 212, 224, 0.2);
+    border-right: 2px solid rgba(245, 242, 242, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 20px 15px;
+    overflow-y: auto;
+    gap: 20px;
 }
 
-#new-chat-btn {
+/* Títulos das seções (Conversas / PDFs) */
+.section-title {
+    font-size: 15px;
+    text-transform: uppercase;
+    color: black;
+    margin-bottom: 10px;
+    font-weight: 700;
+    padding-left: 5px;
+}
+
+/* Divisória visual entre as seções */
+.sidebar-divider {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+    margin: 10px 0;
+}
+
+/* Botões de Ação (Novo Chat / Add PDF) */
+#new-chat-btn, #add-pdf-btn {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 20px;
+    padding: 12px;
+    margin-bottom: 15px;
     background-color: black;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: background-color 0.1s;
+    gap: 10px;
+    transition: all 0.2s ease;
+    font-weight: 500;
 }
 
-#new-chat-btn:hover {
+#new-chat-btn:hover, #add-pdf-btn:hover {
     background-color: #5bb1b0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-/* Estilos da Lista de Sessões */
-#session-list {
+/* Container das Listas */
+.list-container {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
 }
 
+/* Item Individual (Chat ou PDF) */
 .session-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    align-items: center; /* Centraliza verticalmente */
     padding: 10px;
-    background-color: transparent;
-    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.1s;
+    transition: background-color 0.2s;
     border: 1px solid transparent;
 }
 
-.session-item.active {
-    background-color: lightgrey;
-    color: black;
-}
-
 .session-item:hover {
-    background-color: #5bb1b0;
+    background-color: rgba(91, 177, 176, 0.2); /* Cor #5bb1b0 com transparência */
+    border-color: #5bb1b0;
 }
 
+.session-item.active {
+    background-color: #5bb1b0;
+    color: white;
+}
+
+/* Estilos específicos para itens de PDF */
+.pdf-item {
+    gap: 10px;
+}
+
+/* Checkbox Personalizado */
+.pdf-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #5bb1b0;
+}
+
+/* Título do item (Nome do chat ou pdf) */
 .session-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-grow: 1;
+    font-size: 14px;
 }
 
+/* Botão de Excluir */
 .delete-session-btn {
     background: none;
     border: none;
-    color: black;
+    color: #555;
     cursor: pointer;
-    margin-left: 10px;
-    padding: 5px;
-    font-size: 18px;
-    transition: color 0.1s;
+    padding: 4px;
+    font-size: 16px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.session-item.active .delete-session-btn {
+    color: white; /* Muda a cor da lixeira se o item estiver ativo */
 }
 
 .delete-session-btn:hover {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: red;
+}
+
+.session-item.active .delete-session-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
     color: red;
 }
 
