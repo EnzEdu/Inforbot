@@ -25,25 +25,19 @@ function mostrarPreview(event) {
     }
 }
 
-// Validar no formulário a senha
-function validarFormulario(event) {
-    const senha = document.getElementById('senha').value;
-    const confirmar_senha = document.getElementById('confirmar_senha').value;
-    if (senha !== confirmar_senha) {
-        alert('As senhas não coincidem!');
-        event.preventDefault();
-        return false;
+// Editar dados
+function habilitarEdicao(id) {
+    const campo = document.getElementById(id);
+    if (campo) {
+        campo.removeAttribute('readonly');
+        campo.classList.add('editavel');
+        campo.focus();
     }
-    if (senha.length < 6) {
-        alert('A senha deve ter pelo menos 6 caracteres!');
-        event.preventDefault();
-        return false;
-    }
-    return true;
 }
 
-// Apresenta erros durante o registro
-function apresentarErro(msg) {
-    alert(msg);
-    return false;
+// Cancelar edição
+function cancelarEdicao() {
+    if (confirm('Deseja cancelar as alterações?')) {
+        window.location.href = "dashboard.html";
+    }
 }

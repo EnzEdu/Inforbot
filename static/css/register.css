@@ -57,18 +57,75 @@ body {
 
 .container {
     display: flex;
-    width: 550px;
+    width: 900px;
     margin-top: 65px;
 }
 
-.form-box {
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.4);
-    border: 2px solid rgba(255, 255, 255, .2);
+/*Imagem */
+.img-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 0 10px rgba(0, 0, 0, .2);
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 10px 0 0 10px;
+}
+
+#foto_upload {
+    display: none;
+}
+
+.upload-label {
+    cursor: pointer;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.upload-label:hover {
+    transform: scale(1.02);
+}
+
+#icon-default {
+    font-size: 300px;
+    color: white;
+    display: block;
+}
+
+#preview-img {
+    display: none;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid rgba(255, 255, 255, 0.5);
+    background-color: lightgrey;
+}
+
+.upload-text {
+    margin-top: 10px;
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
+    opacity: 0.5;
+}
+
+/*Formulário */
+.form-box {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 0 10px rgba(0, 0, 0, .2);
+    border-radius: 0px 10px 10px 0px;
     background: transparent;
 }
 
@@ -112,6 +169,31 @@ body {
     border: 2px solid #5bb1b0;
 }
 
+.form-box .input-box-s {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-box .input-box-s .input-box {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.form-box .input-box-s input {
+    width: 100%;
+    height: 45px;
+    background-color: white;
+    border: none;
+    outline: none;
+    border: 1px solid lightgrey;
+    border-radius: 30px;
+    font-size: 16px;
+    color: black;
+    padding: 15px;
+    transition: all 0.1s ease;
+}
+
 .form-box .input-box button {
     width: 100%;
     height: 45px;
@@ -138,7 +220,7 @@ body {
     text-align: center;
 }
 
-.login  p a {
+.login p a {
     text-decoration: transparent;
 }
 
