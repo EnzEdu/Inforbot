@@ -212,6 +212,38 @@ body {
     margin: 10px 0;
 }
 
+/* Container da info de armazenamento */
+.storage-container {
+    margin-bottom: 15px;
+    padding: 0 5px;
+}
+
+.storage-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: black;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+/* Fundo da barra (cinza claro) */
+.progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden; /* Garante que o preenchimento não saia para fora */
+}
+
+/* Preenchimento da barra (sua cor tema) */
+.progress-bar-fill {
+    height: 100%;
+    background-color: #5bb1b0;
+    border-radius: 4px;
+    transition: width 0.5s ease-in-out;
+}
+
 /* Botões de Ação (Novo Chat / Add PDF) */
 #new-chat-btn, #add-pdf-btn {
     width: 100%;
