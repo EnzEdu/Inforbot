@@ -1,10 +1,14 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, abort
 from flask_migrate import Migrate
 from flasgger import Swagger
+from werkzeug.utils import secure_filename
 from typing import List
-from models import db, M_AppUser, M_Conversa, M_Mensagem
-from config import Config
+from models import db, M_AppUser, M_Conversa, M_Mensagem, M_Documento
+from config import Config, PASTA_USERS
 from agent import Agent
+import os
+import uuid
+import shutil
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -26,7 +30,7 @@ def home():
             description: Erro no server.
     """
     if 'usuario' in session:
-        return redirect(url_for('dashboard', user_name=session["usuario"], conversa_id=session["conversa_id"]))
+        return redirect(url_for('dashboard', user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
     return redirect(url_for('login'))
 
 
@@ -73,6 +77,7 @@ def login():
             conversa_padrao : M_Conversa = M_Conversa.query.filter_by(t_appuser=user).first()
 
             session["user_id"] = user.id
+            session["user_uuid"] = user.uuid
             session["usuario"] = user.usuario
             if conversa_padrao:
                 session["conversa_id"] = conversa_padrao.id
@@ -82,7 +87,7 @@ def login():
                 db.session.add(conversa_inicial)
                 db.session.commit()
                 session["conversa_id"] = conversa_inicial.id
-            return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+            return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
         else:
             flash("Credenciais invalidas.")
             return redirect(url_for("login"))
@@ -160,6 +165,8 @@ def register():
             description: Erro no server.
     """
     if request.method == "POST":
+        fotoPerfil = request.files.get("fileInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        descricao = request.form["desc"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
         nomeCompleto = request.form["nome"].strip()
         usuario = request.form["usuario"].strip()
         email = request.form["email"].strip().lower()
@@ -170,25 +177,101 @@ def register():
             flash("Nome de usuario ou email em uso.")
             return redirect(url_for("register"))
 
-        user = M_AppUser(nomeCompleto=nomeCompleto, usuario=usuario, email=email)
+        # Criação do objeto do usuario
+        user = M_AppUser(
+            uuid=str(uuid.uuid4()),
+            descricao=descricao,
+            nomeCompleto=nomeCompleto, 
+            usuario=usuario, 
+            email=email)
         user.set_senha_hasheada(senha)
-        # PLACEHOLDER
+
+        # Salva a foto de perfil se existir
+        if fotoPerfil:
+            PASTA_USER = os.path.join(PASTA_USERS, str(user.uuid))
+            os.makedirs(PASTA_USER, exist_ok=True)
+
+            fotoPfpCaminho = os.path.join(PASTA_USER, secure_filename(fotoPerfil.filename))
+            fotoPerfil.save(fotoPfpCaminho)
+        else:
+            fotoPfpCaminho = ''
+        user.set_foto_perfil_caminho(fotoPfpCaminho)
+
+        # Cria uma conversa inicial
         conversa_inicial = M_Conversa(t_appuser=user, titulo="Sessão inicial")
 
         # Salva o usuario no bd
         db.session.add(user)
 
-        # PLACEHOLDER
+        # Salva a conversa inicial
         db.session.add(conversa_inicial)
         db.session.commit()
 
         return redirect(url_for("login"))
-    return render_template("register.html")
+    return render_template("PLACEHOLDER_register.html")
 
 
 
-@app.route("/<user_name>/dashboard/<conversa_id>", methods=["GET", "POST"])
-def dashboard(user_name, conversa_id):
+@app.route("/update", methods=["GET", "POST"])
+def update():
+    """
+    """
+    if request.method == "POST":
+        fotoPerfil = request.files.get("fileInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input da foto
+        descricao = request.form["desc"]            # PLACEHOLDER: trocar pelo termo no campo "name" no input da descricao
+        nomeCompleto = request.form["nome"].strip()
+        usuario = request.form["usuario"].strip()
+        email = request.form["email"].strip().lower()
+        senha = request.form["senha"]
+
+        # Pega a instancia do usuario no db
+        user : M_AppUser = M_AppUser.query.filter_by(uuid=session.get("user_uuid")).first()
+
+        # Check de campos em uso
+        if M_AppUser.query.filter((M_AppUser.usuario == usuario) | (M_AppUser.email == email)).first():
+            flash("Nome de usuario ou email em uso.")
+            return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
+        
+
+        if (fotoPerfil):
+            PASTA_USER = os.path.join(PASTA_USERS, str(user.uuid))
+            if not os.path.isdir(PASTA_USER):
+                os.makedirs(PASTA_USER, exist_ok=True)
+            
+            # Limpa o path da foto anterior
+            if (len(user.fotoPath) != 0):
+                os.remove(user.fotoPath)
+
+            # Salva a foto enviada
+            fotoPfpCaminho = os.path.join(PASTA_USER, secure_filename(fotoPerfil.filename))
+            fotoPerfil.save(fotoPfpCaminho)
+            user.set_foto_perfil_caminho(fotoPfpCaminho)
+
+        if (len(descricao) != 0):
+            user.descricao = descricao
+        
+        if (len(nomeCompleto) != 0):
+            user.nomeCompleto = nomeCompleto
+
+        if (len(usuario) != 0):
+            user.usuario = usuario
+
+        if (len(email) != 0):
+            user.email = email
+
+        if (len(senha) != 0):
+            user.set_senha_hasheada(senha)
+
+        # Salva o usuario modificado
+        db.session.commit()
+
+        return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
+    return render_template("PLACEHOLDER_update.html")
+
+
+
+@app.route("/<user_uuid>/dashboard/<conversa_id>", methods=["GET", "POST"])
+def dashboard(user_uuid, conversa_id):
     """
     Endpoint de acesso a uma conversa do dashboard.
     ---
@@ -202,11 +285,11 @@ def dashboard(user_name, conversa_id):
         Acesso proibido se a sessão não estiver batendo com o login.
     
     parameters:
-      - name: user_name
+      - name: user_uuid
         in: path
         type: string
         required: true
-        description: Nome do usuário.
+        description: UUID do usuário.
 
       - name: conversa_id
         in: path
@@ -223,15 +306,44 @@ def dashboard(user_name, conversa_id):
             description: Erro no server.
     """
     # Previne acessos externos
-    if session.get("usuario") != user_name:
+    if session.get("user_uuid") != user_uuid:
         abort(403)
 
     if request.method == "POST":
-        nova_conversa = M_Conversa(appuser_id=session["user_id"], titulo="Sessão inicial")
-        db.session.add(nova_conversa)
-        db.session.commit()
+        documento = request.files.get("pdfInput") # PLACEHOLDER: trocar pelo termo no campo "name" no input do documento
 
-        session["conversa_id"] = nova_conversa.id
+        # Se documento esta sendo enviado
+        if (documento):
+            # Salva o documento localmente
+            PASTA_CONV = os.path.join(PASTA_USERS, session.get("user_uuid"), session.get("conversa_id"))
+            os.makedirs(PASTA_CONV, exist_ok=True)
+
+            docCaminho = os.path.join(PASTA_CONV, secure_filename(documento.filename))
+            documento.save(docCaminho)
+
+            # Salva o documento na OpenAI
+            with open(docCaminho, "rb") as f:
+                uploaded = Agent.llm_sdk.files.create(
+                    file=f,
+                    purpose="user_data"
+                )
+
+            # Salva o documento na db
+            doc = M_Documento(
+                conversa_id=session["conversa_id"],
+                nome=secure_filename(documento.filename), 
+                path=docCaminho,
+                openai_id=uploaded.id
+            )
+            db.session.add(doc)
+            db.session.commit()
+
+        # Se conversa esta sendo criada
+        else:
+            nova_conversa = M_Conversa(appuser_id=session["user_id"], titulo="Sessão inicial")
+            db.session.add(nova_conversa)
+            db.session.commit()
+            session["conversa_id"] = nova_conversa.id
     else:
         if (session["conversa_id"]):
             session["conversa_id"] = conversa_id
@@ -239,10 +351,11 @@ def dashboard(user_name, conversa_id):
     # Recebe a lista de conversas
     lista_conversas = M_Conversa.query.filter((M_Conversa.appuser_id == session["user_id"])).all()
 
-    if (session["conversa_id"]):
+    if (session.get("conversa_id")):
         # Recebe a lista de mensagens da conversa selecionada
         conversa : M_Conversa = M_Conversa.query.filter(((M_Conversa.appuser_id == session["user_id"]) & (M_Conversa.id == conversa_id))).first()
-        mensagens : List[M_Mensagem]= M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa.id)).all()
+        mensagens : List[M_Mensagem] = M_Mensagem.query.filter((M_Mensagem.conversa_id == conversa.id)).all()
+        documentos : List[M_Documento] = M_Documento.query.filter((M_Documento.conversa_id == conversa.id)).all()
 
         # Converte em uma lista de tuplas (mais controlavel no html)
         lista_mensagens = [{
@@ -250,10 +363,11 @@ def dashboard(user_name, conversa_id):
             "texto": mensagem.texto
         } for mensagem in mensagens]
         lista_mensagens = [result for result in lista_mensagens if "Resumo:" not in result["texto"] and "Titulo:" not in result["texto"]]
+        lista_documentos = [doc.nome for doc in documentos]
 
-        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens)
+        return render_template("PLACEHOLDER_dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=lista_mensagens, lista_documentos=documentos)
     else:
-        return render_template("dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[])
+        return render_template("PLACEHOLDER_dashboard.html", conversa=conversa, lista_conversas=lista_conversas, lista_mensagens=[], lista_documentos=[])
 
 
 
@@ -295,6 +409,7 @@ def enviar_mensagem():
     data = request.get_json()
     mensagem_usuario = data.get("message")
     conversa_id = data.get("conversa_id")
+    documentos_escolhidos_llm_ids = data.get("documentosEscolhidos") # PLACEHOLDER: trocar pelo campo no JSON.stringify em dashboard.js 
 
     if not mensagem_usuario:
         return jsonify({"error": "Nenhuma mensagem digitada."}), 400
@@ -319,7 +434,7 @@ def enviar_mensagem():
             "Retorne um resumo, utilizando o menor número possível de tokens, " \
             "mas mantendo a descrição de pontos importantes que podem vir a ser utilizados " \
             "novamente na conversa. Comece sua resposta com a palavra Resumo."
-        ai_text_res = Agent.enviar_mensagem(historico1, resumo)
+        ai_text_res = Agent.enviar_mensagem(historico1, resumo, [])
 
         # Salva a resposta
         ai_msg_res = M_Mensagem(
@@ -344,8 +459,16 @@ def enviar_mensagem():
         historico = historico[(qnt_faltante_resumo * -1):]
 
 
+    #
+    docs_enviados = []
+    if len(documentos_escolhidos_llm_ids) != 0:
+        lista_docs : List[M_Documento] = M_Documento.query.filter((M_Documento.openai_id.in_(documentos_escolhidos_llm_ids))).all()
+        lista_info = [{"nome": db_doc_object.nome, "openai_id": db_doc_object.openai_id} for db_doc_object in lista_docs]
+        docs_enviados = lista_info
+
+
     # Envia mensagem para o modelo
-    ai_text = Agent.enviar_mensagem(historico, mensagem_usuario)
+    ai_text = Agent.enviar_mensagem(historico, mensagem_usuario, docs_enviados)
 
     # Salva a pergunta
     db.session.expunge_all()
@@ -381,7 +504,7 @@ def enviar_mensagem():
             "Retorne um titulo para esta conversa, baseado no dialogo recente. " \
             "Sua resposta deve começar com \"Titulo:\", seguido por sua sugestão de título. Nada mais." \
             "Sua sugestão de título está limitada a no máximo 5 palavras."
-        ai_text_res = Agent.enviar_mensagem(historico, titulo)
+        ai_text_res = Agent.enviar_mensagem(historico, titulo, [])
 
         # Salva a resposta
         ai_msg_res = M_Mensagem(
@@ -424,9 +547,19 @@ def deletar_conversa(conversa_id):
 
     if conversa:
         try:
+            # Deleta os arquivos na OpenAI
+            documentos : List[M_Documento] = M_Documento.query.filter_by(conversa_id=conversa_id).all()
+            for doc in documentos:
+                Agent.llm_sdk.files.delete(doc.openai_id)
+
             # Deleta a conversa em si
             db.session.delete(conversa)
             
+            # Deleta a pasta relacionada, se existir
+            PASTA_CONV = os.path.join(PASTA_USERS, session.get("user_uuid"), session.get("conversa_id"))
+            if (os.path.exists(PASTA_CONV)):
+                shutil.rmtree(PASTA_CONV)
+
             # Salva as alterações
             db.session.commit()
             
@@ -441,7 +574,7 @@ def deletar_conversa(conversa_id):
     ultima_conversa : M_Conversa = M_Conversa.query.filter_by(appuser_id=session["user_id"]).first()
     if ultima_conversa:
         session["conversa_id"] = ultima_conversa.id
-        return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+        return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
     else:
         # Cria uma sessao caso ainda nao exista
         user : M_AppUser = M_AppUser.query.get(session["user_id"])
@@ -449,7 +582,7 @@ def deletar_conversa(conversa_id):
         db.session.add(conversa_inicial)
         db.session.commit()
         session["conversa_id"] = conversa_inicial.id
-        return redirect(url_for("dashboard", user_name=session["usuario"], conversa_id=session["conversa_id"]))
+        return redirect(url_for("dashboard", user_uuid=session["user_uuid"], conversa_id=session["conversa_id"]))
 
 
 
